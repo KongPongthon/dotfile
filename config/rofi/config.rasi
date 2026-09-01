@@ -1,0 +1,21 @@
+configuration {
+  modi: "drun,run,window";
+  show-icons: true;
+  icon-theme: "Papirus";
+  display-drun: "apps";
+  display-run: "run";
+  display-window: "win";
+  drun-display-format: "{name}";
+  font: "JetBrainsMono Nerd Font 12";
+}
+
+@theme "/usr/share/rofi/themes/Arc-Dark.rasi"
+
+window {
+  width: 520px;
+  border-radius: 8px;
+}
+
+listview {
+  lines: 10;
+}

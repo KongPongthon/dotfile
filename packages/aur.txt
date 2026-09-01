@@ -1,0 +1,4 @@
+# AUR packages (paru / yay)
+google-chrome
+cursor-bin
+pokemon-colorscripts-git

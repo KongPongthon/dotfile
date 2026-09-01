@@ -1,0 +1,174 @@
+* {
+  border: none;
+  border-radius: 0;
+  font-family: "JetBrainsMono Nerd Font", monospace;
+  font-size: 12px;
+  min-height: 0;
+}
+
+window#waybar {
+  background: rgba(24, 24, 37, 0.78);
+  color: #cdd6f4;
+  border-radius: 10px;
+  border: 1px solid rgba(137, 180, 250, 0.18);
+}
+
+#workspaces {
+  margin-left: 6px;
+}
+
+#workspaces button {
+  padding: 0 9px;
+  color: #a6adc8;
+  background: transparent;
+  border-radius: 6px;
+  margin: 3px 2px;
+}
+
+#workspaces button:hover {
+  background: rgba(69, 71, 90, 0.6);
+  color: #cdd6f4;
+}
+
+#workspaces button.active {
+  color: #89b4fa;
+  background: rgba(137, 180, 250, 0.15);
+  border-bottom: 2px solid #89b4fa;
+}
+
+#workspaces button.urgent {
+  color: #f38ba8;
+}
+
+#window {
+  color: #bac2de;
+  padding: 0 10px;
+}
+
+#clock,
+#cpu,
+#memory,
+#temperature,
+#backlight,
+#pulseaudio,
+#network,
+#battery,
+#mpris,
+#idle_inhibitor,
+#tray,
+#custom-weather,
+#custom-notification,
+#custom-lock,
+#custom-power {
+  padding: 0 10px;
+  margin: 4px 2px;
+  border-radius: 7px;
+  background: rgba(49, 50, 68, 0.55);
+}
+
+#clock {
+  color: #cba6f7;
+  font-weight: 600;
+  background: rgba(203, 166, 247, 0.12);
+}
+
+#custom-weather {
+  color: #89dceb;
+}
+
+#cpu {
+  color: #a6e3a1;
+}
+
+#memory {
+  color: #f9e2af;
+}
+
+#temperature {
+  color: #fab387;
+}
+
+#temperature.critical {
+  color: #f38ba8;
+  background: rgba(243, 139, 168, 0.2);
+  animation: blink 1s linear infinite alternate;
+}
+
+#backlight {
+  color: #f5c2e7;
+}
+
+#pulseaudio {
+  color: #89b4fa;
+}
+
+#pulseaudio.muted {
+  color: #6c7086;
+}
+
+#network {
+  color: #94e2d5;
+}
+
+#network.disconnected {
+  color: #f38ba8;
+}
+
+#battery {
+  color: #a6e3a1;
+}
+
+#battery.charging,
+#battery.plugged {
+  color: #a6e3a1;
+}
+
+#battery.warning:not(.charging) {
+  color: #f9e2af;
+}
+
+#battery.critical:not(.charging) {
+  color: #f38ba8;
+  animation: blink 0.8s linear infinite alternate;
+}
+
+#mpris {
+  color: #cba6f7;
+  max-width: 220px;
+}
+
+#idle_inhibitor.activated {
+  color: #f9e2af;
+}
+
+#custom-notification {
+  color: #f5c2e7;
+}
+
+#custom-lock,
+#custom-power {
+  color: #bac2de;
+}
+
+#custom-power {
+  margin-right: 6px;
+  color: #f38ba8;
+}
+
+#tray {
+  background: transparent;
+  padding: 0 6px;
+}
+
+tooltip {
+  background: #1e1e2e;
+  color: #cdd6f4;
+  border: 1px solid #45475a;
+  border-radius: 8px;
+}
+
+@keyframes blink {
+  to {
+    background: rgba(243, 139, 168, 0.45);
+  }
+}

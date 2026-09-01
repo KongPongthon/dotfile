@@ -1,0 +1,67 @@
+# Core compositor
+hyprland
+hypridle
+hyprlock
+hyprpolkitagent
+xdg-desktop-portal-hyprland
+xdg-desktop-portal-gtk
+
+# Audio
+pipewire
+wireplumber
+pipewire-audio
+pipewire-alsa
+pipewire-pulse
+pamixer
+pavucontrol
+playerctl
+
+# UI
+kitty
+waybar
+rofi
+swaync
+wlogout
+swww
+grim
+slurp
+wl-clipboard
+cliphist
+brightnessctl
+jq
+xdg-user-dirs
+xdg-utils
+network-manager-applet
+papirus-icon-theme
+
+# Shell
+zsh
+zsh-completions
+lsd
+fzf
+git
+
+# Fonts (minimal)
+ttf-jetbrains-mono-nerd
+noto-fonts
+noto-fonts-emoji
+otf-font-awesome
+
+# Bluetooth
+bluez
+bluez-utils
+blueman
+
+# Secrets (Chrome passwords / portal)
+gnome-keyring
+libsecret
+
+# Sensors / monitoring (waybar cpu temp)
+lm_sensors
+
+# Misc helpers
+curl
+wget
+unzip
+imagemagick
+fastfetch

@@ -1,0 +1,27 @@
+* {
+    all: unset;
+    font-family: "JetBrainsMono Nerd Font";
+    transition: 160ms;
+}
+
+.notification-row {
+    outline: none;
+}
+
+.notification {
+    background: rgba(30, 30, 46, 0.95);
+    border: 1px solid #89b4fa;
+    border-radius: 8px;
+    margin: 6px;
+    padding: 10px;
+}
+
+.notification-content {
+    color: #cdd6f4;
+}
+
+.control-center {
+    background: rgba(30, 30, 46, 0.95);
+    border-radius: 10px;
+    border: 1px solid #45475a;
+}

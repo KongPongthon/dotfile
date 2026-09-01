@@ -1,0 +1,14 @@
+# Dotfiles / secrets / caches
+.dotfiles-backup-*/
+Install-Logs/
+*.log
+.DS_Store
+
+# Large local wallpaper libraries (repo keeps a small starter set)
+# Add personal huge collections outside git, e.g. ~/รูปภาพ/wallpapers
+.wallpapers/
+
+# Editor
+.vscode/
+.cursor/
+*.swp
