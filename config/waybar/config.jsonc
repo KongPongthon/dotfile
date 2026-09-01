@@ -1,11 +1,11 @@
 {
   "layer": "top",
   "position": "top",
-  "height": 34,
-  "spacing": 6,
-  "margin-top": 4,
-  "margin-left": 8,
-  "margin-right": 8,
+  "height": 38,
+  "spacing": 4,
+  "margin-top": 6,
+  "margin-left": 12,
+  "margin-right": 12,
   "modules-left": [
     "hyprland/workspaces",
     "hyprland/window"
@@ -39,50 +39,47 @@
   },
   "hyprland/window": {
     "max-length": 42,
-    "separate-outputs": true,
-    "rewrite": {
-      "(.*)": "$1"
-    }
+    "separate-outputs": true
   },
   "clock": {
     "interval": 30,
-    "format": "{:%a %d %b %Y  %H:%M}",
+    "format": "󰥔  {:%a %d %b  %H:%M}",
     "tooltip-format": "{:%A, %d %B %Y\n%H:%M:%S}",
     "locale": "th_TH.UTF-8"
   },
   "cpu": {
     "interval": 3,
-    "format": "CPU {usage}%",
+    "format": "  {usage}%",
     "tooltip": true
   },
   "memory": {
     "interval": 5,
-    "format": "RAM {percentage}%",
+    "format": "  {percentage}%",
     "tooltip-format": "{used:0.1f}G / {total:0.1f}G"
   },
   "temperature": {
     "thermal-zone": 1,
     "interval": 3,
     "critical-threshold": 85,
-    "format": "{temperatureC}°C",
-    "format-critical": "{temperatureC}°C!",
+    "format": " {temperatureC}°C",
+    "format-critical": " {temperatureC}°C",
     "tooltip": true
   },
   "backlight": {
-    "format": "BRT {percent}%",
+    "format": "󰃠  {percent}%",
     "on-scroll-up": "brightnessctl set 5%+",
     "on-scroll-down": "brightnessctl set 5%-"
   },
   "pulseaudio": {
-    "format": "VOL {volume}%",
-    "format-muted": "muted",
+    "format": "󰕾  {volume}%",
+    "format-muted": "󰝟  muted",
     "on-click": "pavucontrol",
     "tooltip": true
   },
   "network": {
-    "format-wifi": "{essid} {signalStrength}%",
-    "format-ethernet": "eth",
-    "format-disconnected": "offline",
+    "format-wifi": "󰤨  {essid} {signalStrength}%",
+    "format-ethernet": "󰈀  eth",
+    "format-disconnected": "󰤮  offline",
     "tooltip-format": "{ifname}: {ipaddr}/{cidr}",
     "on-click": "nm-connection-editor"
   },
@@ -92,32 +89,22 @@
       "warning": 30,
       "critical": 15
     },
-    "format": "{capacity}% {icon}",
-    "format-charging": "{capacity}% chg",
-    "format-plugged": "{capacity}% ac",
-    "format-icons": ["bat", "bat", "bat", "bat", "bat"],
+    "format": "{icon} {capacity}%",
+    "format-charging": "󰂄 {capacity}%",
+    "format-plugged": "󰚥 {capacity}%",
+    "format-icons": ["󰂎", "󰁺", "󰁼", "󰁾", "󰁹"],
     "tooltip-format": "{timeTo}, {capacity}%"
   },
   "mpris": {
-    "format": "{player_icon} {title}",
-    "format-paused": "{status_icon} {title}",
-    "max-length": 28,
-    "player-icons": {
-      "default": "♪",
-      "spotify": "♪",
-      "firefox": "♪",
-      "chromium": "♪"
-    },
-    "status-icons": {
-      "paused": "⏸",
-      "playing": "♪"
-    }
+    "format": "󰝚  {title}",
+    "format-paused": "󰏤  {title}",
+    "max-length": 28
   },
   "idle_inhibitor": {
     "format": "{icon}",
     "format-icons": {
-      "activated": "eyes",
-      "deactivated": "zzz"
+      "activated": "",
+      "deactivated": ""
     },
     "tooltip-format-activated": "Idle inhibitor on",
     "tooltip-format-deactivated": "Idle inhibitor off"
@@ -127,7 +114,7 @@
     "icon-size": 16
   },
   "custom/weather": {
-    "exec": "$HOME/.config/waybar/scripts/weather.sh",
+    "exec": "bash ~/.config/waybar/scripts/weather.sh",
     "return-type": "json",
     "interval": 1800,
     "tooltip": true
@@ -136,14 +123,14 @@
     "tooltip": false,
     "format": "{icon}",
     "format-icons": {
-      "notification": "bell",
-      "none": "bell",
-      "dnd-notification": "dnd",
-      "dnd-none": "dnd",
-      "inhibited-notification": "bell",
-      "inhibited-none": "bell",
-      "dnd-inhibited-notification": "dnd",
-      "dnd-inhibited-none": "dnd"
+      "notification": "󰂚",
+      "none": "󰂜",
+      "dnd-notification": "󰂛",
+      "dnd-none": "󰪑",
+      "inhibited-notification": "󰂚",
+      "inhibited-none": "󰂜",
+      "dnd-inhibited-notification": "󰂛",
+      "dnd-inhibited-none": "󰪑"
     },
     "return-type": "json",
     "exec-if": "which swaync-client",
@@ -152,13 +139,13 @@
     "escape": true
   },
   "custom/lock": {
-    "format": "lock",
+    "format": "",
     "tooltip": "Lock",
     "on-click": "~/.config/hypr/scripts/lock.sh"
   },
   "custom/power": {
-    "format": "pwr",
+    "format": "",
     "tooltip": "Logout menu",
-    "on-click": "wlogout -b 2 -c 0 -r 0 -L 860 -R 860 -T 300 -B 300"
+    "on-click": "wlogout"
   }
 }

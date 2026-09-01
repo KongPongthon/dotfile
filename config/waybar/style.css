@@ -1,48 +1,48 @@
 * {
   border: none;
   border-radius: 0;
-  font-family: "JetBrainsMono Nerd Font", monospace;
-  font-size: 12px;
+  font-family: "JetBrainsMono Nerd Font", "Noto Sans", sans-serif;
+  font-size: 13px;
   min-height: 0;
 }
 
 window#waybar {
-  background: rgba(24, 24, 37, 0.78);
+  background: rgba(24, 24, 37, 0.55);
   color: #cdd6f4;
-  border-radius: 10px;
-  border: 1px solid rgba(137, 180, 250, 0.18);
+  border-radius: 16px;
+  border: 1px solid rgba(137, 180, 250, 0.22);
 }
 
 #workspaces {
-  margin-left: 6px;
+  margin-left: 8px;
 }
 
 #workspaces button {
-  padding: 0 9px;
+  padding: 0 10px;
   color: #a6adc8;
   background: transparent;
-  border-radius: 6px;
-  margin: 3px 2px;
+  border-radius: 12px;
+  margin: 4px 2px;
 }
 
 #workspaces button:hover {
-  background: rgba(69, 71, 90, 0.6);
+  background: rgba(69, 71, 90, 0.55);
   color: #cdd6f4;
 }
 
 #workspaces button.active {
-  color: #89b4fa;
-  background: rgba(137, 180, 250, 0.15);
-  border-bottom: 2px solid #89b4fa;
+  color: #1e1e2e;
+  background: #89b4fa;
 }
 
 #workspaces button.urgent {
-  color: #f38ba8;
+  color: #1e1e2e;
+  background: #f38ba8;
 }
 
 #window {
   color: #bac2de;
-  padding: 0 10px;
+  padding: 0 12px;
 }
 
 #clock,
@@ -60,16 +60,16 @@ window#waybar {
 #custom-notification,
 #custom-lock,
 #custom-power {
-  padding: 0 10px;
-  margin: 4px 2px;
-  border-radius: 7px;
-  background: rgba(49, 50, 68, 0.55);
+  padding: 0 12px;
+  margin: 5px 3px;
+  border-radius: 14px;
+  background: rgba(49, 50, 68, 0.62);
 }
 
 #clock {
   color: #cba6f7;
   font-weight: 600;
-  background: rgba(203, 166, 247, 0.12);
+  background: rgba(203, 166, 247, 0.16);
 }
 
 #custom-weather {
@@ -90,7 +90,7 @@ window#waybar {
 
 #temperature.critical {
   color: #f38ba8;
-  background: rgba(243, 139, 168, 0.2);
+  background: rgba(243, 139, 168, 0.22);
   animation: blink 1s linear infinite alternate;
 }
 
@@ -145,26 +145,25 @@ window#waybar {
   color: #f5c2e7;
 }
 
-#custom-lock,
-#custom-power {
+#custom-lock {
   color: #bac2de;
 }
 
 #custom-power {
-  margin-right: 6px;
+  margin-right: 8px;
   color: #f38ba8;
 }
 
 #tray {
   background: transparent;
-  padding: 0 6px;
+  padding: 0 8px;
 }
 
 tooltip {
-  background: #1e1e2e;
+  background: rgba(30, 30, 46, 0.95);
   color: #cdd6f4;
   border: 1px solid #45475a;
-  border-radius: 8px;
+  border-radius: 12px;
 }
 
 @keyframes blink {

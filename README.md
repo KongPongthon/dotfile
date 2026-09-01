@@ -6,7 +6,7 @@ Independent of JaKooLit / wallust / quickshell / cava.
 ## Includes
 
 - Hyprland + hypridle/hyprlock (`hyprpolkitagent` via systemd user service)
-- kitty, waybar, rofi, swaync, wlogout, swww (CachyOS may install as `awww`)
+- kitty, waybar, rofi, swaync, wlogout, awww (swww successor)
 - Waybar with date/time, weather, CPU, RAM, temperature, brightness, mpris, notifications
 - zsh + Oh-My-Zsh + pokemon-colorscripts
 - google-chrome + cursor-bin (Chrome flags for Wayland; does **not** change default browser)
@@ -38,11 +38,12 @@ Reboot (or restart SDDM) to see the login screen changes.
 | Boot / logout | **SDDM** (`simple_sddm_2`) | Wallpaper background; username + password **centered**. Does not change Autologin settings. |
 | In session | **hyprlock** + **hypridle** | Wallpaper via `~/.config/hypr/lock.bg`; user + password centered. |
 
-### Sleep-like lock
+### Lock
 
-- `Super+L`, lid close, or ~5 min idle → lock, then **DPMS off** (screen blanks like sleep)
+- `Super+L` or waybar lock → **hyprlock** (clock + password) immediately
+- Lid close → lock, then **DPMS off** (screen blanks like sleep)
+- Idle ~5 min → lock; ~10s later → DPMS off
 - Mouse move or key press → screen on again with the unlock UI
-- Script: `~/.config/hypr/scripts/lock.sh`
 - Changing wallpaper (`Super+Shift+W`) also updates `lock.bg` for the next lock
 
 ## Keybinds
@@ -55,7 +56,10 @@ Reboot (or restart SDDM) to see the login screen changes.
 | Super+Space | rofi |
 | Super+N | SwayNC notification center |
 | Super+E | open home |
-| Super+L | lock + blank screen |
+| Super+L | lock (hyprlock) |
+| Super+arrows / H J K ; | move focus |
+| Super+, / Super+. | previous / next workspace |
+| Super+Shift+, / Super+Shift+. | same (`<` / `>`) |
 | Super+Shift+W | random wallpaper |
 | Print | screenshot region → clipboard |
 
@@ -73,7 +77,7 @@ Runtime order:
 2. `~/Pictures/wallpapers`
 3. `~/dotfiles/wallpapers` (starter set in this repo)
 
-SDDM default background install uses `wallpapers/Night monochrome.jpg`.
+Uses **awww** (with swww fallback). SDDM default background install uses `wallpapers/Night monochrome.jpg`.
 
 ## Chrome on hybrid NVIDIA
 
@@ -89,8 +93,3 @@ cd ~/dotfiles
 git remote add origin git@github.com:YOU/dotfiles.git
 git push -u origin main
 ```
-# dotfile
-# dotfile
-# dotfile
-# dotfile
-# dotfile

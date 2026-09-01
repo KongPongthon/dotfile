@@ -22,7 +22,7 @@ waybar
 rofi
 swaync
 wlogout
-swww
+awww
 grim
 slurp
 wl-clipboard
@@ -60,6 +60,7 @@ libsecret
 lm_sensors
 
 # Misc helpers
+python
 curl
 wget
 unzip
