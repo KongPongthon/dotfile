@@ -5,13 +5,11 @@ Personal Hyprland setup for Arch/CachyOS (MSI GF63: Intel + NVIDIA).
 ## Includes
 
 - Hyprland + hypridle / hyprlock (`hyprpolkitagent` via systemd user service)
-- kitty, rofi, swaync, wlogout, awww
+- kitty, waybar, rofi, swaync, wlogout, awww
 - zsh + Oh-My-Zsh + pokemon-colorscripts
 - google-chrome + cursor-bin (Chrome flags for Wayland; does **not** change default browser)
 - Pipewire, portals, bluetooth, gnome-keyring, Papirus icons
 - SDDM login theme tweaks (centered user/password + wallpaper)
-
-No status bar yet — use keybinds below.
 
 ## Install
 

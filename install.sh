@@ -69,7 +69,11 @@ link_configs() {
   backup_then_link "$ROOT/config/fastfetch" "$HOME/.config/fastfetch"
   backup_then_link "$ROOT/config/wlogout" "$HOME/.config/wlogout"
   backup_then_link "$ROOT/shell/.zshrc" "$HOME/.zshrc"
+  backup_then_link "$ROOT/config/waybar" "$HOME/.config/waybar"
   chmod +x "$ROOT/config/hypr/scripts/"*.sh
+  if [[ -d "$ROOT/config/waybar/scripts" ]]; then
+    chmod +x "$ROOT/config/waybar/scripts/"*.sh 2>/dev/null || true
+  fi
   ok "Configs linked (backup: $BACKUP_DIR)"
 }
 
@@ -206,8 +210,10 @@ apply_live_session() {
   if command -v hyprctl >/dev/null 2>&1; then
     hyprctl reload >/dev/null 2>&1 || true
   fi
-  if pgrep -x waybar >/dev/null 2>&1; then
-    pkill -x waybar || true
+  if command -v waybar >/dev/null 2>&1; then
+    pkill -x waybar 2>/dev/null || true
+    waybar &
+    disown || true
   fi
   ok "Live session refreshed"
 }

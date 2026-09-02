@@ -18,6 +18,7 @@ playerctl
 
 # UI
 kitty
+waybar
 rofi
 swaync
 wlogout
