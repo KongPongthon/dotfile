@@ -83,7 +83,8 @@ Daily map (same keys as before):
 | Super+P | pseudo |
 | Super+Shift+J | toggle dwindle split |
 | Super+H J K ; | move focus |
-| Super+arrows / Super+Shift+arrows / H K ; | move window |
+| Super+arrows | previous / next workspace |
+| Super+Shift+arrows / H K ; | move window |
 | Super+1 … 0 | workspace |
 | Super+Shift+1 … 0 | send to workspace |
 | Super+, / Super+. | previous / next workspace |

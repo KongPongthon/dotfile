@@ -29,14 +29,14 @@ ShellRoot {
         { "category": "windows", "title": "Pseudo", "desc": "สลับ pseudo tiling", "keys": ["SUPER", "P"], "action": "" },
         { "category": "windows", "title": "Toggle Split", "desc": "สลับ dwindle split", "keys": ["SUPER", "SHIFT", "J"], "action": "" },
         { "category": "windows", "title": "Focus Window", "desc": "โฟกัสแบบ vim (ขวาใช้ semicolon เพราะ L คือล็อก)", "keys": ["SUPER", "H / J / K / ;"], "action": "" },
-        { "category": "windows", "title": "Move Window", "desc": "ย้ายหน้าต่างด้วยลูกศร", "keys": ["SUPER", "Arrow Keys"], "action": "" },
+        { "category": "windows", "title": "Move Window", "desc": "ย้ายหน้าต่างด้วย Super+Shift+ลูกศร", "keys": ["SUPER", "SHIFT", "Arrow Keys"], "action": "" },
         { "category": "windows", "title": "Move Window (Mouse)", "desc": "Super+คลิกซ้ายลากเพื่อย้าย", "keys": ["SUPER", "Left Drag"], "action": "" },
         { "category": "windows", "title": "Resize Window (Mouse)", "desc": "Super+คลิกขวาลากเพื่อย่อขยาย", "keys": ["SUPER", "Right Drag"], "action": "" },
 
         { "category": "workspaces", "title": "Hotkeys Cheat Sheet", "desc": "เปิด/ปิดหน้าต่างคีย์ลัด", "keys": ["SUPER", "/"], "action": "" },
         { "category": "workspaces", "title": "Focus Workspace 1-10", "desc": "สลับ Workspace 1 ถึง 10", "keys": ["SUPER", "1 .. 9, 0"], "action": "" },
         { "category": "workspaces", "title": "Move Window to Workspace", "desc": "ย้ายหน้าต่างตามไปยัง Workspace", "keys": ["SUPER", "SHIFT", "1 .. 9, 0"], "action": "" },
-        { "category": "workspaces", "title": "Cycle Workspaces", "desc": "เวิร์กสเปซก่อนหน้า / ถัดไป", "keys": ["SUPER", ", / ."], "action": "" },
+        { "category": "workspaces", "title": "Cycle Workspaces", "desc": "เวิร์กสเปซก่อนหน้า / ถัดไป (ลูกศรหรือ , / .)", "keys": ["SUPER", "Arrows or , / ."], "action": "" },
 
         { "category": "tools", "title": "Region Screenshot", "desc": "ลากพื้นที่แล้วคัดลอกไปคลิปบอร์ด", "keys": ["Print"], "action": "" },
         { "category": "tools", "title": "Fullscreen Screenshot", "desc": "แคปทั้งจอลงคลิปบอร์ด", "keys": ["SUPER", "Print"], "action": "" },
