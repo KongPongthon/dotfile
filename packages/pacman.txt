@@ -18,7 +18,6 @@ playerctl
 
 # UI
 kitty
-waybar
 rofi
 swaync
 wlogout
@@ -56,7 +55,7 @@ blueman
 gnome-keyring
 libsecret
 
-# Sensors / monitoring (waybar cpu temp)
+# Sensors
 lm_sensors
 
 # Misc helpers

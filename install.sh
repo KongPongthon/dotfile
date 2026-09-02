@@ -62,7 +62,6 @@ backup_then_link() {
 link_configs() {
   note "Linking configs..."
   backup_then_link "$ROOT/config/hypr" "$HOME/.config/hypr"
-  backup_then_link "$ROOT/config/waybar" "$HOME/.config/waybar"
   backup_then_link "$ROOT/config/rofi" "$HOME/.config/rofi"
   backup_then_link "$ROOT/config/swaync" "$HOME/.config/swaync"
   backup_then_link "$ROOT/config/kitty" "$HOME/.config/kitty"
@@ -71,7 +70,6 @@ link_configs() {
   backup_then_link "$ROOT/config/wlogout" "$HOME/.config/wlogout"
   backup_then_link "$ROOT/shell/.zshrc" "$HOME/.zshrc"
   chmod +x "$ROOT/config/hypr/scripts/"*.sh
-  chmod +x "$ROOT/config/waybar/scripts/"*.sh 2>/dev/null || true
   ok "Configs linked (backup: $BACKUP_DIR)"
 }
 
@@ -203,20 +201,14 @@ enable_services() {
 
 apply_live_session() {
   [[ -n "${WAYLAND_DISPLAY:-}" ]] || return 0
-  note "Hyprland session detected — applying wallpaper and waybar..."
+  note "Hyprland session detected — applying wallpaper..."
   bash "$ROOT/config/hypr/scripts/set-wallpaper.sh" random || warn "Wallpaper apply failed"
   if command -v hyprctl >/dev/null 2>&1; then
     hyprctl reload >/dev/null 2>&1 || true
   fi
   if pgrep -x waybar >/dev/null 2>&1; then
     pkill -x waybar || true
-    sleep 0.2
   fi
-  if command -v waybar >/dev/null 2>&1 && [[ -n "${WAYLAND_DISPLAY:-}" ]]; then
-    waybar >/dev/null 2>&1 &
-    disown || true
-  fi
-  bash "$ROOT/config/waybar/scripts/weather.sh" >/dev/null 2>&1 || warn "Weather script did not run"
   ok "Live session refreshed"
 }
 
@@ -237,7 +229,7 @@ main() {
   apply_live_session
   echo
   ok "Done. Log out / relaunch Hyprland to apply. Reboot to see SDDM login changes."
-  echo "Keybinds: Super+Return kitty | Super+B Chrome | Super+C Cursor | Super+Space rofi | Super+N notifications | Super+L lock | Super+,/. workspaces | Super+Shift+W wallpaper"
+  echo "Keybinds: Super+Return kitty | Super+B Chrome | Super+C Cursor | Super+D rofi | Super+N notifications | Super+L lock | Super+,/. workspaces | Super+Shift+W wallpaper"
 }
 
 main "$@"

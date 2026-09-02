@@ -11,6 +11,13 @@ DIRS=(
 
 LOCK_BG="${HOME}/.config/hypr/lock.bg"
 
+notify() {
+  echo "$*" >&2
+  if command -v notify-send >/dev/null 2>&1; then
+    notify-send -u critical "Wallpaper" "$*" 2>/dev/null || true
+  fi
+}
+
 pick_dir() {
   for d in "${DIRS[@]}"; do
     if [[ -d "$d" ]]; then
@@ -46,6 +53,40 @@ detect_www() {
   fi
 }
 
+wait_compositor() {
+  local i
+  for i in $(seq 1 50); do
+    if command -v hyprctl >/dev/null 2>&1; then
+      if hyprctl monitors >/dev/null 2>&1; then
+        return 0
+      fi
+    elif [[ -n "${WAYLAND_DISPLAY:-}" ]]; then
+      return 0
+    fi
+    sleep 0.2
+  done
+  return 1
+}
+
+start_daemon() {
+  if ((${#DAEMON_ARGS[@]})); then
+    "$WWW_DAEMON" "${DAEMON_ARGS[@]}" &
+  else
+    "$WWW_DAEMON" &
+  fi
+}
+
+wait_ready() {
+  local i
+  for i in $(seq 1 50); do
+    if "$WWW" query >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 0.2
+  done
+  return 1
+}
+
 ensure_daemon() {
   mkdir -p "$CACHE_DIR"
   if [[ "$WWW" == "awww" && ! -f "${CACHE_DIR}/.cache_cleared" ]]; then
@@ -55,45 +96,46 @@ ensure_daemon() {
   if "$WWW" query >/dev/null 2>&1; then
     return 0
   fi
-  if ((${#DAEMON_ARGS[@]})); then
-    "$WWW_DAEMON" "${DAEMON_ARGS[@]}" &
-  else
-    "$WWW_DAEMON" &
+  start_daemon
+  if wait_ready; then
+    return 0
   fi
-  local i
-  for i in $(seq 1 25); do
-    sleep 0.2
-    if "$WWW" query >/dev/null 2>&1; then
-      return 0
-    fi
-  done
-  echo "Wallpaper daemon ($WWW_DAEMON) did not become ready" >&2
-  return 1
+  # Wayland may not have been ready on the first attempt
+  start_daemon
+  wait_ready
 }
 
 WALL_DIR="$(pick_dir)" || {
-  echo "No wallpaper directory found" >&2
+  notify "No wallpaper directory found"
   exit 1
 }
 
 MODE="${1:-}"
 if [[ "$MODE" == "random" || -z "$MODE" ]]; then
   mapfile -t files < <(find "$WALL_DIR" -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) ! -path '*/Dynamic-Wallpapers/*')
-  ((${#files[@]} > 0)) || { echo "No wallpapers in $WALL_DIR" >&2; exit 1; }
+  ((${#files[@]} > 0)) || { notify "No wallpapers in $WALL_DIR"; exit 1; }
   TARGET="${files[RANDOM % ${#files[@]}]}"
 else
   TARGET="$MODE"
 fi
+
+TARGET="$(realpath -e "$TARGET")"
 
 # Always refresh lock wallpaper symlink (even if wallpaper daemon missing)
 update_lock_bg "$TARGET"
 
 detect_www
 if [[ -z "$WWW" ]]; then
-  echo "Wallpaper (lock.bg only): $TARGET"
-  exit 0
+  notify "awww/swww not installed — desktop wallpaper skipped (lock.bg only)"
+  exit 1
 fi
 
-ensure_daemon
+wait_compositor || true
+
+if ! ensure_daemon; then
+  notify "Wallpaper daemon ($WWW_DAEMON) did not become ready"
+  exit 1
+fi
+
 "$WWW" img "$TARGET" --transition-type fade --transition-duration 1
 echo "Wallpaper: $TARGET"

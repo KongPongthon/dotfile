@@ -5,28 +5,28 @@
 }
 
 window {
-  background-color: rgba(24, 24, 37, 0.72);
+  background-color: rgba(17, 17, 17, 0.72);
 }
 
 button {
-  color: #cdd6f4;
-  background-color: rgba(49, 50, 68, 0.82);
-  border: 1px solid rgba(137, 180, 250, 0.28);
-  border-radius: 22px;
+  color: #ffffff;
+  background-color: rgba(40, 40, 40, 0.82);
+  border: 1px solid rgba(51, 204, 255, 0.28);
+  border-radius: 16px;
   margin: 12px;
   padding: 18px;
   background-repeat: no-repeat;
   background-position: center;
   background-size: 28%;
+  outline-style: none;
 }
 
 button:focus,
 button:hover,
 button:active {
-  background-color: rgba(137, 180, 250, 0.28);
-  border-color: #89b4fa;
-  color: #cdd6f4;
-  outline-style: none;
+  background-color: rgba(51, 204, 255, 0.28);
+  border-color: #33ccff;
+  color: #ffffff;
 }
 
 #lock {
