@@ -65,7 +65,15 @@ for command_name in atuin delta easyeffects lazygit luac mise pre-commit quicksh
 done
 
 printf '\nConfiguration Symlinks:\n'
-check_link "$HOME/.config/hypr" "$REPO_DIR/.config/hypr"
+if [ -L "$HOME/.config/hypr" ]; then
+    fail "~/.config/hypr is a directory symlink — Hyprland will fail to start. Run: ./install.sh --fix-hypr"
+elif [ -d "$HOME/.config/hypr" ]; then
+    pass "~/.config/hypr is a real directory"
+    check_link "$HOME/.config/hypr/hyprland.lua" "$REPO_DIR/.config/hypr/hyprland.lua"
+    check_link "$HOME/.config/hypr/hosts" "$REPO_DIR/hosts"
+else
+    fail "~/.config/hypr missing"
+fi
 check_link "$HOME/.config/waybar" "$REPO_DIR/.config/waybar"
 check_link "$HOME/.config/kitty" "$REPO_DIR/.config/kitty"
 check_link "$HOME/.config/fuzzel" "$REPO_DIR/.config/fuzzel"

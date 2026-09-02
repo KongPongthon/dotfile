@@ -2,3 +2,4 @@
 google-chrome
 cursor-bin
 pokemon-colorscripts-git
+ttf-silkscreen

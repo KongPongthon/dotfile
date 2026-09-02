@@ -27,6 +27,7 @@ show_help() {
     echo ""
     echo -e "${BOLD}Options:${NC}"
     echo "  -l, --link             Symlink all configs and helper scripts (Default)"
+    echo "      --fix-hypr         Repair ~/.config/hypr only (use from TTY if login fails)"
     echo "  -p, --packages [CAT..] Install packages (core desktop dev aur)"
     echo "  -z, --zsh              Install Oh-My-Zsh and custom plugins"
     echo "  -d, --dev              Configure dev tools (Git Delta, zdiff3, pre-commit)"
@@ -62,6 +63,33 @@ link_file() {
 
     ln -sfn "$src" "$dest"
     echo -e "${GREEN}[Link] Linked ${name} -> $dest${NC}"
+}
+
+# Hyprland 0.55+ looks for ~/.config/hypr/hyprland.lua. If that file is missing
+# it tries to mkdir the parent, then write a default lua config. A symlink at
+# ~/.config/hypr makes create_directories() fail with "File exists" and the
+# compositor exits before login — the failure seen on VM reboot.
+link_hypr_tree() {
+    local src="$DOTFILES_DIR/.config/hypr"
+    local dest="$CONFIG_DIR/hypr"
+
+    if [ -L "$dest" ]; then
+        mkdir -p "$BACKUP_DIR"
+        echo -e "${YELLOW}[Backup] ~/.config/hypr is a symlink; moving it to $BACKUP_DIR/${NC}"
+        mv "$dest" "$BACKUP_DIR/hypr"
+    elif [ -e "$dest" ] && [ ! -d "$dest" ]; then
+        mkdir -p "$BACKUP_DIR"
+        mv "$dest" "$BACKUP_DIR/"
+    fi
+    mkdir -p "$dest"
+
+    local item
+    for item in hyprland.lua hypridle.conf hyprlock.conf waybar-fix.c waybar-fix.so scripts; do
+        if [ -e "$src/$item" ]; then
+            link_file "$src/$item" "$dest/$item" "hypr/$item"
+        fi
+    done
+    link_file "$DOTFILES_DIR/hosts" "$dest/hosts" "hypr/hosts"
 }
 
 build_helpers() {
@@ -254,7 +282,7 @@ sync_links() {
     chmod +x "$DOTFILES_DIR/.config/hypr/scripts/"*.sh 2>/dev/null || true
     chmod +x "$DOTFILES_DIR/scripts/"* 2>/dev/null || true
 
-    link_file "$DOTFILES_DIR/.config/hypr" "$CONFIG_DIR/hypr" "Hyprland"
+    link_hypr_tree
     link_file "$DOTFILES_DIR/.config/waybar" "$CONFIG_DIR/waybar" "Waybar"
     link_file "$DOTFILES_DIR/.config/kitty" "$CONFIG_DIR/kitty" "Kitty"
     link_file "$DOTFILES_DIR/.config/rofi" "$CONFIG_DIR/rofi" "Rofi"
@@ -372,6 +400,9 @@ main() {
             build_helpers
             sync_links
             run_extras
+            ;;
+        --fix-hypr | fix-hypr)
+            link_hypr_tree
             ;;
         *)
             echo -e "${RED}Unknown option: $action${NC}\n"

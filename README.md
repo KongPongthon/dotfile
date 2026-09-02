@@ -29,6 +29,20 @@ Or link only (after packages exist):
 Then log out and start Hyprland again. Existing configs are backed up under `~/.dotfiles-backup-*`.
 Reboot (or restart SDDM) to see the login screen changes.
 
+`~/.config/hypr` must be a **real directory** (files inside are symlinks). Do not replace the whole folder with a symlink — Hyprland then exits with `Couldn't create config home directory (File exists)` and you cannot log in.
+
+### Cannot log in after reboot (VM)
+
+On the black console (or `Ctrl+Alt+F2`):
+
+```bash
+ls -ld ~/.config/hypr
+cd ~/dotfiles
+./install.sh --fix-hypr
+```
+
+Then `Ctrl+Alt+F1` (or reboot) and log in again.
+
 `hosts/home-msi-gf63` holds this laptop's monitors, Waybar sensors, and kanshi profiles. The DMI slug is a symlink to that directory so a fresh clone still resolves.
 
 ## NVIDIA hybrid

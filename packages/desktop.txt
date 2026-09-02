@@ -44,7 +44,6 @@ tesseract
 tesseract-data-eng
 tesseract-data-tha
 ttf-meslo-nerd
-ttf-silkscreen
 ttf-jetbrains-mono-nerd
 noto-fonts
 noto-fonts-cjk
