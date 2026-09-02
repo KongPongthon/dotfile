@@ -1,0 +1,11 @@
+# Host layer: MSI GF63 Thin 11UC
+# Linked to ~/.config/kanshi/config by install.sh.
+
+profile standalone {
+    output "eDP-1" enable mode 1920x1080@144Hz position 0,0 scale 1.0
+}
+
+profile hdmi {
+    output "HDMI-A-1" enable mode 1920x1080@75Hz position 0,0 scale 1.0
+    output "eDP-1" enable mode 1920x1080@144Hz position 1920,0 scale 1.0
+}

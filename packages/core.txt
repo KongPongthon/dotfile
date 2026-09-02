@@ -1,0 +1,18 @@
+# Shell and command-line foundation
+base-devel
+git
+github-cli
+ripgrep
+fd
+fzf
+bat
+eza
+jq
+zoxide
+starship
+zsh
+zsh-completions
+lsd
+fish
+curl
+wget

@@ -1,0 +1,28 @@
+# Copy this file to mise.toml in a Python + Node project and adjust versions.
+[tools]
+python = "3.13"
+node = "24"
+
+# Keep .env.local ignored by Git. Never commit credentials to mise.toml.
+[env]
+_.file = ".env.local"
+
+[tasks.dev]
+description = "Run the Django development server"
+run = "uv run python manage.py runserver"
+
+[tasks.test]
+description = "Run the Python test suite"
+run = "uv run pytest -q"
+
+[tasks.lint]
+description = "Run Python lint checks"
+run = "uv run ruff check ."
+
+[tasks.format]
+description = "Format Python code"
+run = "uv run ruff format ."
+
+[tasks.frontend]
+description = "Run the frontend development server"
+run = "npm run dev"

@@ -1,0 +1,172 @@
+#!/usr/bin/env bash
+
+# ==============================================================================
+# Network & VPN Interactive Menu for Hyprland + Waybar
+# Uses fuzzel + nmcli
+# ==============================================================================
+
+notify() {
+    notify-send -a "Network Menu" "$1" "$2" -i "$3" 2>/dev/null || true
+}
+
+connect_wifi() {
+    notify "Scanning Wi-Fi..." "Scanning available networks..." "network-wireless"
+
+    # Get scanned wifi list (unique SSIDs, sorted by signal)
+    # Format: IN-USE:SSID:SIGNAL:SECURITY
+    local raw_list
+    raw_list=$(nmcli -t -f IN-USE,SSID,SIGNAL,SECURITY device wifi list --rescan yes 2>/dev/null)
+
+    if [[ -z "$raw_list" ]]; then
+        notify "Wi-Fi" "No networks found" "network-wireless-offline"
+        return
+    fi
+
+    # Format list for fuzzel
+    local entries=""
+    local seen=""
+    while IFS=: read -r in_use ssid signal security; do
+        [[ -z "$ssid" ]] && continue
+
+        # Avoid duplicate SSIDs
+        if echo "$seen" | grep -Fxq "$ssid"; then
+            continue
+        fi
+        seen+="${ssid}"$'\n'
+
+        local sec_icon=""
+        if [[ -n "$security" && "$security" != "--" ]]; then
+            sec_icon="󰌾"
+        fi
+
+        if [[ "$in_use" == "*" ]]; then
+            entries+="󰄲 [Connected] ${ssid} (${signal}% ${sec_icon})"$'\n'
+        else
+            entries+="󰤨 ${ssid} (${signal}% ${sec_icon})"$'\n'
+        fi
+    done <<<"$raw_list"
+
+    entries+="󰌍 Back to Main Menu"
+
+    local chosen
+    chosen=$(echo -e "$entries" | fuzzel --dmenu --prompt="󰤨 Wi-Fi: " --lines=12 --width=42)
+
+    [[ -z "$chosen" || "$chosen" == "󰌍 Back to Main Menu" ]] && return
+
+    local selected_ssid
+    selected_ssid=$(echo "$chosen" | sed -E 's/^[󰄲󰤨] (\[Connected\] )?//; s/ \([0-9]+%.*\)$//')
+
+    if [[ "$chosen" =~ \[Connected\] ]]; then
+        nmcli connection down "$selected_ssid" 2>/dev/null || nmcli device disconnect wlan0
+        notify "Wi-Fi Disconnected" "Disconnected from $selected_ssid" "network-wireless-offline"
+        return
+    fi
+
+    # If connection profile already saved
+    if nmcli -t -f NAME connection show | grep -Fxq "$selected_ssid"; then
+        if nmcli connection up "$selected_ssid"; then
+            notify "Wi-Fi Connected" "Connected to $selected_ssid" "network-wireless"
+        else
+            notify "Connection Failed" "Could not connect to $selected_ssid" "network-error"
+        fi
+    else
+        # If security is enabled, ask for password
+        if echo "$chosen" | grep -q "󰌾"; then
+            local pass
+            pass=$(echo "" | fuzzel --dmenu --password --prompt="󰌾 Password for ${selected_ssid}: " --lines=0 --width=35)
+            [[ -z "$pass" ]] && return
+
+            if nmcli device wifi connect "$selected_ssid" password "$pass"; then
+                notify "Wi-Fi Connected" "Connected to $selected_ssid" "network-wireless"
+            else
+                notify "Connection Failed" "Incorrect password or failed to connect" "network-error"
+            fi
+        else
+            if nmcli device wifi connect "$selected_ssid"; then
+                notify "Wi-Fi Connected" "Connected to $selected_ssid" "network-wireless"
+            else
+                notify "Connection Failed" "Could not connect to $selected_ssid" "network-error"
+            fi
+        fi
+    fi
+}
+
+main_menu() {
+    local wifi_status
+    wifi_status=$(nmcli -t -f WIFI g | head -n1)
+    local active_wifi
+    active_wifi=$(nmcli -t -f NAME,TYPE,DEVICE connection show --active 2>/dev/null | grep ':802-11-wireless:' | cut -d':' -f1 | head -n1)
+
+    local menu=""
+
+    # 1. VPN / WireGuard Connections
+    local vpn_conns
+    vpn_conns=$(nmcli -t -f NAME,TYPE,ACTIVE connection show | grep -E ":(wireguard|vpn):" || true)
+    if [[ -n "$vpn_conns" ]]; then
+        while IFS=: read -r name _ active; do
+            if [[ "$active" == "yes" ]]; then
+                menu+="󰖂 VPN: ${name} [Connected - Click to disconnect]"$'\n'
+            else
+                menu+="󰖂 VPN: ${name} [Disconnected - Click to connect]"$'\n'
+            fi
+        done <<<"$vpn_conns"
+    fi
+
+    # 2. Wi-Fi Status & Actions
+    if [[ "$wifi_status" == "enabled" ]]; then
+        if [[ -n "$active_wifi" ]]; then
+            menu+="󰤨 Wi-Fi: ${active_wifi} [Connected]"$'\n'
+        else
+            menu+="󰤨 Wi-Fi: Enabled [Not connected]"$'\n'
+        fi
+        menu+="󱛃 Scan & Connect to Wi-Fi..."$'\n'
+        menu+="󰤭 Turn Wi-Fi Off"$'\n'
+    else
+        menu+="󰤨 Turn Wi-Fi On"$'\n'
+    fi
+
+    # 3. Settings / Tools
+    menu+="󰒓 Network Connections (GUI)"$'\n'
+    menu+="󰞋 Network Manager (TUI)"
+
+    local choice
+    choice=$(echo -e "$menu" | fuzzel --dmenu --prompt="󰛳 Network: " --lines=10 --width=45)
+
+    [[ -z "$choice" ]] && exit 0
+
+    case "$choice" in
+        *"VPN:"*)
+            local vpn_name
+            vpn_name=$(echo "$choice" | sed -E 's/.*VPN: ([^ ]+).*/\1/')
+            if echo "$choice" | grep -q "Connected - Click to disconnect"; then
+                nmcli connection down "$vpn_name"
+                notify "VPN Disconnected" "$vpn_name is now inactive" "network-vpn"
+            else
+                nmcli connection up "$vpn_name"
+                notify "VPN Connected" "$vpn_name is now active" "network-vpn"
+            fi
+            ;;
+        *"Scan & Connect to Wi-Fi"*)
+            connect_wifi
+            ;;
+        *"Wi-Fi:"*"[Connected]"*)
+            connect_wifi
+            ;;
+        *"Turn Wi-Fi Off"*)
+            nmcli radio wifi off
+            notify "Wi-Fi Disabled" "Wi-Fi radio turned off" "network-wireless-offline"
+            ;;
+        *"Turn Wi-Fi On"*)
+            nmcli radio wifi on
+            notify "Wi-Fi Enabled" "Wi-Fi radio turned on" "network-wireless"
+            ;;
+        *"Network Connections (GUI)"*)
+            nm-connection-editor &
+            ;;
+        *"Network Manager (TUI)"*)
+            kitty -e nmtui &
+            ;;
+    esac
+}
+
+main_menu

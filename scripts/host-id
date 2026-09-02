@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+# Resolve the identity of the machine this checkout is running on.
+#
+# The host id names a directory under hosts/, which holds every setting that is
+# tied to one physical laptop (panel modes, sensor paths, monitor layout).
+#
+# Resolution order, first hit wins:
+#   1. $DOTFILES_HOST                 - one-off override, useful for testing
+#   2. ~/.config/dotfiles-host        - the pinned alias, written by install.sh --host
+#   3. a slug derived from DMI        - vendor + model, so a fresh clone still works
+#   4. the hostname                   - last resort if DMI is unreadable
+#
+# Usage:
+#   host-id            print the resolved id
+#   host-id --detect   print the DMI slug only, ignoring the pinned alias
+#   host-id --pin ID   write ID to ~/.config/dotfiles-host
+
+set -euo pipefail
+
+ALIAS_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles-host"
+
+slugify() {
+    tr '[:upper:]' '[:lower:]' \
+        | sed -e 's/[^a-z0-9]\+/-/g' -e 's/^-\+//' -e 's/-\+$//'
+}
+
+detect_from_dmi() {
+    local dmi="/sys/devices/virtual/dmi/id"
+    local vendor="" model=""
+
+    [ -r "$dmi/sys_vendor" ] && vendor="$(cat "$dmi/sys_vendor")"
+    for f in product_name board_name; do
+        if [ -r "$dmi/$f" ]; then
+            model="$(cat "$dmi/$f")"
+            [ -n "$model" ] && break
+        fi
+    done
+
+    [ -n "$model" ] || return 1
+
+    # "HP" + "Victus by HP Gaming Laptop 15-fb2xxx" would repeat the vendor, so
+    # only prefix it when the model does not already name the manufacturer.
+    local combined="$model"
+    if [ -n "$vendor" ] && ! printf '%s' "$model" | grep -qiF "$vendor"; then
+        combined="$vendor $model"
+    fi
+
+    printf '%s' "$combined" | slugify
+}
+
+resolve() {
+    if [ -n "${DOTFILES_HOST:-}" ]; then
+        printf '%s\n' "$DOTFILES_HOST"
+        return
+    fi
+
+    if [ -r "$ALIAS_FILE" ]; then
+        local pinned
+        pinned="$(tr -d '\n\r' <"$ALIAS_FILE")"
+        if [ -n "$pinned" ]; then
+            printf '%s\n' "$pinned"
+            return
+        fi
+    fi
+
+    local slug
+    if slug="$(detect_from_dmi)" && [ -n "$slug" ]; then
+        printf '%s\n' "$slug"
+        return
+    fi
+
+    hostname | slugify
+}
+
+case "${1:-}" in
+    --detect)
+        detect_from_dmi || { echo "host-id: DMI unreadable" >&2; exit 1; }
+        echo
+        ;;
+    --pin)
+        [ $# -eq 2 ] || { echo "usage: host-id --pin ID" >&2; exit 1; }
+        mkdir -p "$(dirname "$ALIAS_FILE")"
+        printf '%s\n' "$2" >"$ALIAS_FILE"
+        echo "Pinned host id: $2 ($ALIAS_FILE)"
+        ;;
+    -h | --help)
+        sed -n '2,20p' "$0" | sed 's/^# \?//'
+        ;;
+    "")
+        resolve
+        ;;
+    *)
+        echo "host-id: unknown argument: $1" >&2
+        exit 1
+        ;;
+esac

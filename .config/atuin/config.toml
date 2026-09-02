@@ -1,0 +1,19 @@
+# Local-first shell history. Sync remains off until explicitly configured.
+auto_sync = false
+update_check = false
+search_mode = "fuzzy"
+filter_mode = "workspace"
+workspaces = true
+style = "compact"
+inline_height = 20
+show_preview = true
+enter_accept = false
+secrets_filter = true
+
+# Extra safeguards for credentials that do not match Atuin's built-in filters.
+history_filter = [
+  "^export .*(_TOKEN|_SECRET|_PASSWORD|_KEY)=",
+  "^set -[gx]+ .*(_TOKEN|_SECRET|_PASSWORD|_KEY) ",
+  "(--token|--password|--secret|--api-key)(=| )[[:graph:]]+",
+  "^atuin (login|register)",
+]

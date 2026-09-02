@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# Waybar watchdog launcher with hyprland-lua IPC fix LD_PRELOAD.
+#
+# Single instance: an flock guard means racing callers (Hyprland autostart,
+# the reload keybind, theme-switcher.sh) can never stack two bars on a monitor.
+# To restart the bar, kill /usr/bin/waybar (`pkill -x waybar`) and this
+# watchdog respawns it; killing this script stops Waybar for good.
+
+LOCK_FILE="${XDG_RUNTIME_DIR:-/tmp}/waybar-watchdog.lock"
+
+exec 9>"$LOCK_FILE"
+if ! flock -n 9; then
+    # Another watchdog already owns the bar.
+    exit 0
+fi
+
+if [ -f "$HOME/.config/hypr/waybar-fix.so" ]; then
+    export LD_PRELOAD="$HOME/.config/hypr/waybar-fix.so${LD_PRELOAD:+:$LD_PRELOAD}"
+fi
+
+stopping=0
+child=""
+
+shutdown() {
+    stopping=1
+    [ -n "$child" ] && kill "$child" 2>/dev/null
+}
+trap shutdown TERM INT HUP
+
+resolve_wayland_display() {
+    local runtime_dir="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+    if [ -n "${WAYLAND_DISPLAY:-}" ] && [ -S "$runtime_dir/$WAYLAND_DISPLAY" ]; then
+        return 0
+    fi
+
+    local candidate=""
+    if command -v hyprctl >/dev/null 2>&1; then
+        candidate=$(hyprctl instances 2>/dev/null | awk -F': ' '/wl socket:/ {print $2; exit}')
+    fi
+
+    if [ -z "$candidate" ] && command -v systemctl >/dev/null 2>&1; then
+        candidate=$(systemctl --user show-environment 2>/dev/null | awk -F= '/^WAYLAND_DISPLAY=/ {print $2}')
+    fi
+
+    if [ -z "$candidate" ]; then
+        candidate=$(find "$runtime_dir" -maxdepth 1 -name 'wayland-[0-9]*' ! -name '*.lock' ! -name '*.*' -printf '%f\n' 2>/dev/null | head -n 1)
+    fi
+
+    if [ -n "$candidate" ]; then
+        export WAYLAND_DISPLAY="$candidate"
+        return 0
+    fi
+    return 1
+}
+
+# Auto-recovery watchdog: respawn Waybar if it exits for any reason, including
+# a crash (e.g. SIGSEGV from mpris/playerctl) or an external restart request.
+while true; do
+    if ! resolve_wayland_display; then
+        [ "$stopping" -eq 1 ] && break
+        sleep 0.5
+        continue
+    fi
+
+    /usr/bin/waybar "$@" &
+    child=$!
+    wait "$child"
+
+    [ "$stopping" -eq 1 ] && break
+    sleep 0.5
+done

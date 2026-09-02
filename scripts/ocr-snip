@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+
+set -o pipefail
+
+readonly OCR_LANGUAGES="${OCR_LANGUAGES:-tha+eng}"
+tmp_image="$(mktemp --suffix=.png /tmp/ocr-snip.XXXXXX)" || exit 1
+
+cleanup() {
+    rm -f -- "$tmp_image"
+}
+trap cleanup EXIT HUP INT TERM
+
+for command_name in grim slurp tesseract wl-copy; do
+    if ! command -v "$command_name" >/dev/null 2>&1; then
+        notify-send -r 8899 -u critical "OCR Error" \
+            "Missing command: $command_name" 2>/dev/null || true
+        exit 1
+    fi
+done
+
+geometry="$(slurp)" || exit 0
+[ -n "$geometry" ] || exit 0
+
+if ! grim -g "$geometry" "$tmp_image"; then
+    notify-send -r 8899 -u critical "OCR Error" \
+        "Could not capture the selected region." 2>/dev/null || true
+    exit 1
+fi
+
+if ! text="$(tesseract "$tmp_image" stdout -l "$OCR_LANGUAGES" 2>/dev/null)"; then
+    notify-send -r 8899 -u critical "OCR Error" \
+        "Tesseract failed. Check installed language data: $OCR_LANGUAGES" 2>/dev/null || true
+    exit 1
+fi
+
+if [ -z "${text//[[:space:]]/}" ]; then
+    notify-send -r 8899 -u normal "OCR" \
+        "No readable text found." 2>/dev/null || true
+    exit 0
+fi
+
+printf '%s' "$text" | wl-copy
+notify-send -r 8899 -u low "OCR copied to clipboard" \
+    "Languages: $OCR_LANGUAGES" 2>/dev/null || true

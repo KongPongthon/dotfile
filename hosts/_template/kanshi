@@ -1,0 +1,8 @@
+# Host layer template. Copy to hosts/<your-host-id>/kanshi and edit.
+# Linked to ~/.config/kanshi/config by install.sh.
+#
+# `kanshictl` and `wlr-randr` list the output names and modes to fill in.
+
+profile standalone {
+    output "eDP-1" enable position 0,0 scale 1.0
+}

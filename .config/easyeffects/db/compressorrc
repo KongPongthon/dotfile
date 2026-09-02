@@ -1,0 +1,6 @@
+[sie][Compressor#0]
+attack=15
+ratio=3.1
+release=150
+sidechainMode=1
+threshold=-18

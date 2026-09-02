@@ -1,0 +1,18 @@
+[tasks.dev]
+description = "Inspect this workstation's dotfiles setup"
+run = "./scripts/doctor.sh"
+
+[tasks.lint]
+description = "Validate shell, Lua and JSON configuration"
+run = "./scripts/lint.sh"
+
+[tasks.test]
+description = "Run the repository quality gate"
+depends = ["lint"]
+
+[tasks.format]
+description = "Format maintained shell and Lua files"
+run = [
+  "shfmt -w -i 4 -ci install.sh scripts/*",
+  "stylua hosts",
+]

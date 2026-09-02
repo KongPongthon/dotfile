@@ -1,0 +1,6 @@
+[sie][Gate#0]
+attack=10
+curveThreshold=-38
+reduction=-25
+release=150
+sidechainPreamp=1.0

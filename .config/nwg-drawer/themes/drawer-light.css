@@ -1,0 +1,45 @@
+window {
+    background-color: rgba(244, 239, 234, 0.97);
+    color: #2B2538;
+}
+
+/* search entry */
+entry {
+    background-color: #E8DFD7;
+    color: #2B2538;
+    border: 1px solid #6E64A6;
+    border-radius: 8px;
+    padding: 8px 12px;
+}
+
+button, image {
+    background: none;
+    border: none;
+    color: #2B2538;
+}
+
+button:hover {
+    background-color: #D8CBC0;
+    border-radius: 8px;
+}
+
+#category-button {
+    margin: 0 10px 0 10px;
+}
+
+#pinned-box {
+    padding-bottom: 5px;
+    border-bottom: 1px solid #C8B9AC;
+}
+
+#files-box {
+    padding: 5px;
+    border: 1px solid #C8B9AC;
+    border-radius: 12px;
+}
+
+#math-label {
+    font-weight: bold;
+    font-size: 16px;
+    color: #6E64A6;
+}

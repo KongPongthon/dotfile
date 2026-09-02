@@ -1,0 +1,91 @@
+configuration {
+    modi:                       "drun,run,filebrowser,window";
+    show-icons:                 true;
+    display-drun:               "🔍 Search";
+    display-run:                "🏃 Run";
+    display-filebrowser:        "📁 Files";
+    display-window:             "🪟 Windows";
+    drun-display-format:        "{name}";
+    font:                       "Silkscreen, MesloLGS Nerd Font 10";
+}
+
+@import "colors.rasi"
+
+* {
+    width: 600;
+    font: "Silkscreen, MesloLGS Nerd Font 10";
+}
+
+element-text, element-icon , case-indicator {
+    background-color: inherit;
+    text-color:       inherit;
+}
+
+window {
+    height:              450px;
+    border:              2px;
+    border-color:        @border-col;
+    background-color:    @bg-col;
+    border-radius:       14px;
+    padding:             15px;
+}
+
+mainbox {
+    background-color:    @bg-col;
+    children:            [ inputbar, listview ];
+    spacing:             15px;
+}
+
+inputbar {
+    children:            [ prompt, entry ];
+    background-color:    @bg-col-light;
+    border-radius:       10px;
+    padding:             10px 14px;
+    spacing:             10px;
+}
+
+prompt {
+    background-color:    transparent;
+    text-color:          @accent-lav;
+}
+
+entry {
+    background-color:    transparent;
+    text-color:          @fg-col;
+    placeholder:         "Type to search...";
+    placeholder-color:   @grey;
+}
+
+listview {
+    border:              0px;
+    padding:             6px 0px 0px;
+    margin:              0px;
+    columns:             1;
+    lines:               8;
+    background-color:    @bg-col;
+    spacing:             8px;
+    cycle:               true;
+}
+
+element {
+    padding:             10px 12px;
+    background-color:    @bg-col;
+    text-color:          @fg-col;
+    border-radius:       8px;
+    spacing:             12px;
+}
+
+element-icon {
+    size:                28px;
+}
+
+element selected {
+    background-color:    @selected-col;
+    text-color:          @accent-blue;
+    border:              1px;
+    border-color:        @accent-lav;
+}
+
+element-text {
+    vertical-align:      0.5;
+}

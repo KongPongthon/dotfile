@@ -1,0 +1,342 @@
+#!/usr/bin/env bash
+
+# ==============================================================================
+# Audio Output & Input Interactive Selector for PipeWire / PulseAudio
+# Uses fuzzel + pactl + notify-send
+# ==============================================================================
+
+set -euo pipefail
+
+NOTIF_SINK_ID=2593
+NOTIF_SOURCE_ID=2594
+
+notify() {
+    local app="$1"
+    local notif_id="$2"
+    local title="$3"
+    local msg="$4"
+    local icon="${5:-audio-speakers}"
+    notify-send -a "$app" -r "$notif_id" -u low -i "$icon" "$title" "$msg" 2>/dev/null || true
+}
+
+get_sink_icon() {
+    local bus="$1"
+    local form="$2"
+    local name="$3"
+    local desc="$4"
+
+    if [[ "$bus" == *"bluetooth"* || "$form" =~ headset|headphone || "$name" =~ bluez || "$desc" =~ [Hh]eadset|[Hh]eadphone ]]; then
+        echo "󰋋"
+    elif [[ "$name" =~ [Hh][Dd][Mm][Ii] || "$desc" =~ [Hh][Dd][Mm][Ii]|[Dd]isplay[Pp]ort ]]; then
+        echo "󰍹"
+    elif [[ "$name" =~ easyeffects ]]; then
+        echo "󰎆"
+    else
+        echo "󰓃"
+    fi
+}
+
+get_source_icon() {
+    local bus="$1"
+    local form="$2"
+    local name="$3"
+    local desc="$4"
+
+    if [[ "$bus" == *"bluetooth"* || "$form" =~ headset|headphone || "$name" =~ bluez ]]; then
+        echo "󰋋"
+    else
+        echo "󰍬"
+    fi
+}
+
+clean_desc() {
+    local desc="$1"
+    echo "$desc" | sed -E 's/^[A-Za-z0-9_]+ High Definition Audio Controller //; s/^Advanced Micro Devices, Inc. \[AMD\/ATI\] //;'
+}
+
+switch_sink() {
+    local target_sink="$1"
+    local target_desc="${2:-$target_sink}"
+    local icon="${3:-audio-speakers}"
+
+    pactl set-default-sink "$target_sink"
+
+    # Move active playback streams to new sink
+    pactl list short sink-inputs 2>/dev/null | while read -r input_id _; do
+        [[ -n "$input_id" ]] && pactl move-sink-input "$input_id" "$target_sink" 2>/dev/null || true
+    done
+
+    notify "Audio Output" "$NOTIF_SINK_ID" "Audio Output Switched" "Active: $target_desc" "$icon"
+}
+
+switch_source() {
+    local target_source="$1"
+    local target_desc="${2:-$target_source}"
+    local icon="${3:-audio-input-microphone}"
+
+    pactl set-default-source "$target_source"
+
+    # Move active recording streams to new source
+    pactl list short source-outputs 2>/dev/null | while read -r output_id _; do
+        [[ -n "$output_id" ]] && pactl move-source-output "$output_id" "$target_source" 2>/dev/null || true
+    done
+
+    notify "Audio Input" "$NOTIF_SOURCE_ID" "Audio Input Switched" "Active: $target_desc" "$icon"
+}
+
+cycle_sink() {
+    local current_sink
+    current_sink=$(pactl get-default-sink 2>/dev/null)
+    local sinks=()
+    while IFS= read -r s; do
+        [[ -n "$s" ]] && sinks+=("$s")
+    done < <(pactl list short sinks 2>/dev/null | awk '{print $2}')
+
+    if [[ ${#sinks[@]} -eq 0 ]]; then
+        notify "Audio Output" "$NOTIF_SINK_ID" "Audio Error" "No audio outputs found" "dialog-error"
+        return 1
+    fi
+
+    local next_sink="${sinks[0]}"
+    for i in "${!sinks[@]}"; do
+        if [[ "${sinks[$i]}" == "$current_sink" ]]; then
+            local next_idx=$(( (i + 1) % ${#sinks[@]} ))
+            next_sink="${sinks[$next_idx]}"
+            break
+        fi
+    done
+
+    local sink_desc
+    sink_desc=$(pactl list sinks 2>/dev/null | grep -A 2 "$next_sink" | grep "Description:" | cut -d ':' -f2- | xargs || echo "$next_sink")
+    switch_sink "$next_sink" "$sink_desc"
+}
+
+show_input_menu() {
+    local raw_sources
+    raw_sources=$(pactl list sources 2>/dev/null)
+    local current_source
+    current_source=$(pactl get-default-source 2>/dev/null)
+
+    declare -A SOURCE_MAP
+    declare -A DESC_MAP
+
+    local source_name=""
+    local source_desc=""
+    local source_vol=""
+    local source_mute=""
+    local source_bus=""
+    local source_form=""
+
+    local menu_items=()
+
+    process_source() {
+        [[ -z "$source_name" || "$source_name" =~ \.monitor$ ]] && return
+
+        local icon
+        icon=$(get_source_icon "$source_bus" "$source_form" "$source_name" "$source_desc")
+        local display_desc
+        display_desc=$(clean_desc "$source_desc")
+
+        local vol_str="[$source_vol]"
+        if [[ "$source_mute" == "yes" ]]; then
+            vol_str="[Muted]"
+        fi
+
+        local prefix="   "
+        if [[ "$source_name" == "$current_source" ]]; then
+            prefix="󰄲 "
+        fi
+
+        local display_line="${prefix}${icon}  ${display_desc}  ${vol_str}"
+        menu_items+=("$display_line")
+        SOURCE_MAP["$display_line"]="$source_name"
+        DESC_MAP["$display_line"]="$display_desc"
+    }
+
+    while IFS= read -r line; do
+        if [[ "$line" =~ ^Source\ #[0-9]+ ]]; then
+            process_source
+            source_name=""
+            source_desc=""
+            source_vol=""
+            source_mute=""
+            source_bus=""
+            source_form=""
+        elif [[ "$line" =~ ^[[:space:]]*Name:[[:space:]]*(.*) ]]; then
+            source_name="${BASH_REMATCH[1]}"
+        elif [[ "$line" =~ ^[[:space:]]*Description:[[:space:]]*(.*) ]]; then
+            source_desc="${BASH_REMATCH[1]}"
+        elif [[ -z "$source_vol" && "$line" =~ ^[[:space:]]*Volume:.*\/[[:space:]]*([0-9]+)% ]]; then
+            source_vol="${BASH_REMATCH[1]}%"
+        elif [[ "$line" =~ ^[[:space:]]*Mute:[[:space:]]*(.*) ]]; then
+            source_mute="${BASH_REMATCH[1]}"
+        elif [[ "$line" =~ device.bus[[:space:]]*=[[:space:]]*\"(.*)\" ]]; then
+            source_bus="${BASH_REMATCH[1]}"
+        elif [[ "$line" =~ device.form_factor[[:space:]]*=[[:space:]]*\"(.*)\" ]]; then
+            source_form="${BASH_REMATCH[1]}"
+        fi
+    done <<< "$raw_sources"
+    process_source
+
+    local menu=""
+    for item in "${menu_items[@]}"; do
+        menu+="${item}"$'\n'
+    done
+
+    menu+="󰌍  Back to Output Devices"$'\n'
+    menu+="󰒓  Audio Settings (pavucontrol)"
+
+    local lines_count=$(( ${#menu_items[@]} + 3 ))
+    [[ $lines_count -gt 15 ]] && lines_count=15
+
+    local chosen
+    chosen=$(echo -e -n "$menu" | fuzzel --dmenu --prompt="󰍬 Microphone: " --lines="$lines_count" --width=48 2>/dev/null || true)
+
+    [[ -z "$chosen" ]] && return 0
+
+    case "$chosen" in
+        *"Back to Output Devices"*)
+            show_output_menu
+            ;;
+        *"Audio Settings (pavucontrol)"*)
+            pavucontrol &
+            ;;
+        *)
+            local target="${SOURCE_MAP["$chosen"]:-}"
+            if [[ -n "$target" ]]; then
+                switch_source "$target" "${DESC_MAP["$chosen"]}"
+            fi
+            ;;
+    esac
+}
+
+show_output_menu() {
+    local raw_sinks
+    raw_sinks=$(pactl list sinks 2>/dev/null)
+    local current_sink
+    current_sink=$(pactl get-default-sink 2>/dev/null)
+
+    declare -A SINK_MAP
+    declare -A DESC_MAP
+
+    local sink_name=""
+    local sink_desc=""
+    local sink_vol=""
+    local sink_mute=""
+    local sink_bus=""
+    local sink_form=""
+
+    local menu_items=()
+
+    process_sink() {
+        [[ -z "$sink_name" ]] && return
+
+        local icon
+        icon=$(get_sink_icon "$sink_bus" "$sink_form" "$sink_name" "$sink_desc")
+        local display_desc
+        display_desc=$(clean_desc "$sink_desc")
+
+        local vol_str="[$sink_vol]"
+        if [[ "$sink_mute" == "yes" ]]; then
+            vol_str="[Muted]"
+        fi
+
+        local prefix="   "
+        if [[ "$sink_name" == "$current_sink" ]]; then
+            prefix="󰄲 "
+        fi
+
+        local display_line="${prefix}${icon}  ${display_desc}  ${vol_str}"
+        menu_items+=("$display_line")
+        SINK_MAP["$display_line"]="$sink_name"
+        DESC_MAP["$display_line"]="$display_desc"
+    }
+
+    while IFS= read -r line; do
+        if [[ "$line" =~ ^Sink\ #[0-9]+ ]]; then
+            process_sink
+            sink_name=""
+            sink_desc=""
+            sink_vol=""
+            sink_mute=""
+            sink_bus=""
+            sink_form=""
+        elif [[ "$line" =~ ^[[:space:]]*Name:[[:space:]]*(.*) ]]; then
+            sink_name="${BASH_REMATCH[1]}"
+        elif [[ "$line" =~ ^[[:space:]]*Description:[[:space:]]*(.*) ]]; then
+            sink_desc="${BASH_REMATCH[1]}"
+        elif [[ -z "$sink_vol" && "$line" =~ ^[[:space:]]*Volume:.*\/[[:space:]]*([0-9]+)% ]]; then
+            sink_vol="${BASH_REMATCH[1]}%"
+        elif [[ "$line" =~ ^[[:space:]]*Mute:[[:space:]]*(.*) ]]; then
+            sink_mute="${BASH_REMATCH[1]}"
+        elif [[ "$line" =~ device.bus[[:space:]]*=[[:space:]]*\"(.*)\" ]]; then
+            sink_bus="${BASH_REMATCH[1]}"
+        elif [[ "$line" =~ device.form_factor[[:space:]]*=[[:space:]]*\"(.*)\" ]]; then
+            sink_form="${BASH_REMATCH[1]}"
+        fi
+    done <<< "$raw_sinks"
+    process_sink
+
+    local menu=""
+    for item in "${menu_items[@]}"; do
+        menu+="${item}"$'\n'
+    done
+
+    menu+="󰍬  Switch Input (Microphone)..."$'\n'
+    menu+="󰝟  Toggle Mute"$'\n'
+    menu+="󰒓  Audio Settings (pavucontrol)"
+
+    local lines_count=$(( ${#menu_items[@]} + 4 ))
+    [[ $lines_count -gt 15 ]] && lines_count=15
+
+    local chosen
+    chosen=$(echo -e -n "$menu" | fuzzel --dmenu --prompt="󰕾 Output: " --lines="$lines_count" --width=48 2>/dev/null || true)
+
+    [[ -z "$chosen" ]] && return 0
+
+    case "$chosen" in
+        *"Switch Input (Microphone)"*)
+            show_input_menu
+            ;;
+        *"Toggle Mute"*)
+            pactl set-sink-mute @DEFAULT_SINK@ toggle
+            local mute_status
+            mute_status=$(pactl get-sink-mute @DEFAULT_SINK@ | awk '{print $2}')
+            notify "Audio Output" "$NOTIF_SINK_ID" "Audio Mute" "Mute state: $mute_status" "audio-volume-muted"
+            ;;
+        *"Audio Settings (pavucontrol)"*)
+            pavucontrol &
+            ;;
+        *)
+            local target="${SINK_MAP["$chosen"]:-}"
+            if [[ -n "$target" ]]; then
+                switch_sink "$target" "${DESC_MAP["$chosen"]}"
+            fi
+            ;;
+    esac
+}
+
+case "${1:-}" in
+    -c|--cycle|--next|-t|--toggle)
+        cycle_sink
+        ;;
+    -i|--input|--mic)
+        show_input_menu
+        ;;
+    --mute|--toggle-mute)
+        pactl set-sink-mute @DEFAULT_SINK@ toggle
+        ;;
+    -h|--help)
+        echo "Usage: audio-switch [OPTIONS]"
+        echo ""
+        echo "Options:"
+        echo "  (none), -m, --menu    Show interactive output selection menu (Fuzzel)"
+        echo "  -c, --cycle, --next   Cycle immediately to next output sink"
+        echo "  -i, --input, --mic    Show interactive input/microphone selection menu"
+        echo "  --toggle-mute         Toggle mute for current default sink"
+        echo "  -h, --help            Show this help message"
+        ;;
+    *)
+        show_output_menu
+        ;;
+esac

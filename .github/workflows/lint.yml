@@ -1,0 +1,25 @@
+name: Lint dotfiles
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+
+    steps:
+      - name: Install validation tools
+        run: >-
+          pacman -Syu --noconfirm
+          git jq lua python shellcheck shfmt stylua yq zsh fish
+
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run quality gate
+        run: ./scripts/lint.sh

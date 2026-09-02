@@ -1,0 +1,40 @@
+// Host layer template. Copy to hosts/<your-host-id>/waybar.jsonc and edit.
+//
+// Pulled in by .config/waybar/config.jsonc through "include". Waybar resolves
+// duplicate keys in favour of the *including* file, so any key set here must be
+// absent from config.jsonc.
+{
+    "hyprland/workspaces": {
+        "disable-scroll": true,
+        "all-outputs": true,
+        "format": "{name}",
+        // Must match WORKSPACE_COUNT in this directory's hypr.lua.
+        "persistent-workspaces": {
+            "*": [1, 2, 3, 4, 5]
+        }
+    },
+
+    // Find the sensor with:
+    //   for h in /sys/class/hwmon/hwmon*; do echo "$h -> $(cat $h/name)"; done
+    // Pick k10temp (AMD) or coretemp (Intel), then resolve its stable path:
+    //   readlink -f /sys/class/hwmon/hwmonN
+    // Use the parent "hwmon" directory here. Never hardcode /sys/class/hwmon/
+    // hwmonN: that number is assigned at boot and moves between boots.
+    "temperature": {
+        "hwmon-path-abs": "/sys/devices/platform/coretemp.0/hwmon",
+        "input-filename": "temp1_input",
+        "critical-threshold": 80,
+        "format-critical": "󰸁 {temperatureC}°C",
+        "format": "󰔏 {temperatureC}°C",
+        "tooltip": true
+    },
+
+    // `hyprctl devices | grep -A2 Keyboard` lists the names on this machine.
+    "hyprland/language": {
+        "format": "󰌌 {}",
+        "format-en": "EN",
+        "format-th": "TH",
+        "keyboard-name": "at-translated-set-2-keyboard",
+        "on-click": "hyprctl switchxkblayout at-translated-set-2-keyboard next"
+    }
+}

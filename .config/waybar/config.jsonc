@@ -1,0 +1,258 @@
+{
+    // Machine-specific settings -- sensor paths, keyboard name, workspace count
+    // -- live in hosts/<id>/waybar.jsonc and reach us through this symlink,
+    // created by install.sh. See hosts/README.md.
+    //
+    // Waybar resolves duplicate keys in favour of the *including* file, so any
+    // key defined in the host layer must stay out of this file.
+    "include": ["~/.config/waybar/host.jsonc"],
+
+    "layer": "top",
+    "position": "top",
+    "height": 36,
+    "margin-top": 8,
+    "margin-left": 8,
+    "margin-right": 8,
+
+    "modules-left": [
+        "hyprland/workspaces",
+        "hyprland/window",
+        "mpris",
+        "cpu",
+        "memory",
+        "temperature",
+        "custom/fan",
+        "disk",
+        "custom/updates"
+    ],
+    "modules-center": [
+        "clock"
+    ],
+    "modules-right": [
+        "privacy",
+        "idle_inhibitor",
+        "hyprland/language",
+        "backlight",
+        "pulseaudio",
+        "pulseaudio#microphone",
+        "network",
+        "bluetooth",
+        "battery",
+        "custom/battery-saver",
+        "tray",
+        "custom/power"
+    ],
+
+    "clock": {
+        "interval": 1,
+        "format": "󰥔 {:%H:%M:%S  │  󰨲 %a %d %b}",
+        "tooltip-format": "<span size='x-large'><b>{:%B %Y}</b></span>\n\n<tt><small>{calendar}</small></tt>",
+        "calendar": {
+            "mode": "month",
+            "mode-mon-col": 3,
+            "weeks-pos": "right",
+            "on-scroll": 1,
+            "format": {
+                "months": "<b>{}</b>",
+                "days": "{}",
+                "weeks": "<b>W{}</b>",
+                "weekdays": "<b>{}</b>",
+                "today": "<b><u> {} </u></b>"
+            }
+        },
+        "actions": {
+            "on-click": "mode",
+            "on-click-right": "mode",
+            "on-scroll-up": "shift_up",
+            "on-scroll-down": "shift_down"
+        }
+    },
+
+    "mpris": {
+        "format": "{player_icon} {dynamic}",
+        "format-paused": "{status_icon} <i>{dynamic}</i>",
+        "player-icons": {
+            "default": "󰎈",
+            "spotify": "󰓇",
+            "firefox": "󰈹",
+            "chromium": "󰊯",
+            "google-chrome": "󰊯"
+        },
+        "status-icons": {
+            "paused": "󰏤"
+        },
+        "max-length": 25
+    },
+
+    "privacy": {
+        "icon-spacing": 4,
+        "icon-size": 14,
+        "transition-duration": 250,
+        "modules": [
+            {
+                "type": "screenshare",
+                "tooltip": true,
+                "tooltip-icon-size": 24
+            },
+            {
+                "type": "audio-in",
+                "tooltip": true,
+                "tooltip-icon-size": 24
+            }
+        ]
+    },
+
+    "idle_inhibitor": {
+        "format": "{icon}",
+        "format-icons": {
+            "activated": "󰅶",
+            "deactivated": "󰾪"
+        },
+        "tooltip-format-activated": "Idle Inhibitor: Active (Keep Awake)",
+        "tooltip-format-deactivated": "Idle Inhibitor: Inactive"
+    },
+
+    "backlight": {
+        "format": "{icon} {percent}%",
+        "format-icons": ["", "", "", "󰃝", "󰃞", "󰃟", "󰃠"],
+        "tooltip-format": "Brightness {percent}%",
+        "on-scroll-up": "brightnessctl set 5%+",
+        "on-scroll-down": "brightnessctl set 5%-"
+    },
+
+    "custom/fan": {
+        "format": "{}",
+        "return-type": "json",
+        "interval": 3,
+        "exec": "waybar-fan status",
+        "on-click": "waybar-fan toggle",
+        "on-click-right": "waybar-fan menu",
+        "exec-on-event": true
+    },
+
+    "disk": {
+        "interval": 30,
+        "format": "󰋊 {percentage_used}%",
+        "path": "/",
+        "tooltip-format": "Disk: {used} / {total} ({percentage_used}%)"
+    },
+
+    "custom/updates": {
+        "format": "󰏔 {}",
+        "interval": 3600,
+        "exec": "checkupdates 2>/dev/null | wc -l",
+        "exec-if": "exit 0",
+        "on-click": "kitty -e sudo pacman -Syu",
+        "tooltip-format": "Pending Pacman Updates"
+    },
+
+    "battery": {
+        // No "bat" key on purpose: Waybar picks the system battery itself, so
+        // this stays correct on a machine whose battery is not BAT0.
+        "interval": 10,
+        "states": {
+            "warning": 30,
+            "critical": 15
+        },
+        "format": "{icon} {capacity}%",
+        "format-charging": "󰂄 {capacity}%",
+        "format-plugged": "󰚥 {capacity}%",
+        "format-full": "󰁹 {capacity}%",
+        "format-icons": ["󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"],
+        "tooltip-format": "{timeTo}\nHealth: {health}%\nDraw: {power:0.1f} W\nCycles: {cycles}",
+        "on-click": "battery-saver toggle",
+        "on-click-right": "battery-saver off"
+    },
+
+    "custom/battery-saver": {
+        "format": "{}",
+        "return-type": "json",
+        "interval": 10,
+        "exec": "battery-saver status",
+        "on-click": "battery-saver toggle",
+        "on-click-right": "battery-saver off",
+        "on-click-middle": "battery-saver auto",
+        "exec-on-event": true
+    },
+
+    "bluetooth": {
+        "format": "󰂯",
+        "format-disabled": "󰂲",
+        "format-connected": "󰂱 {num_connections}",
+        "tooltip-format": "{controller_alias}\t{controller_address}",
+        "tooltip-format-connected": "{controller_alias}\t{controller_address}\n\n{device_enumerate}",
+        "tooltip-format-enumerate-connected": "{device_alias}\t{device_address}",
+        "on-click": "blueman-manager || kitty -e bluetoothctl"
+    },
+
+    "hyprland/window": {
+        "format": "<span>{title}</span>",
+        "max-length": 35,
+        "separate-outputs": true,
+        "rewrite": {
+            "": " Desktop"
+        }
+    },
+
+    "cpu": {
+        "interval": 2,
+        "format": "󰻠 {usage}%",
+        "states": {
+            "warning": 70,
+            "critical": 90
+        },
+        "tooltip": true,
+        "on-click": "kitty -e btop"
+    },
+
+    "memory": {
+        "interval": 2,
+        "format": "󰍛 {percentage}%",
+        "states": {
+            "warning": 75,
+            "critical": 90
+        },
+        "tooltip-format": "RAM: {used:0.1f}GB / {total:0.1f}GB",
+        "on-click": "kitty -e btop"
+    },
+
+    "pulseaudio": {
+        "format": "{icon} {volume}%",
+        "format-muted": "󰖁 Muted",
+        "format-icons": {
+            "headphone": "󰋋",
+            "headset": "󰋋",
+            "default": ["󰕿", "󰖀", "󰕾"]
+        },
+        "on-click": "pavucontrol",
+        "on-click-right": "audio-switch"
+    },
+
+    "pulseaudio#microphone": {
+        "format": "{format_source}",
+        "format-source": "󰍬 {volume}%",
+        "format-source-muted": "󰍭 Muted",
+        "on-click": "pavucontrol"
+    },
+
+    "network": {
+        "interval": 5,
+        "format-wifi": "󰤨 {essid}",
+        "format-ethernet": "󰈀 {ifname}",
+        "format-disconnected": "󰤭 Offline",
+        "tooltip-format": "{ifname} via {gwaddr}",
+        "on-click": "network-menu",
+        "on-click-right": "nm-connection-editor"
+    },
+
+    "tray": {
+        "icon-size": 16,
+        "spacing": 12
+    },
+
+    "custom/power": {
+        "format": "󰐥",
+        "tooltip": false,
+        "on-click": "powermenu"
+    }
+}

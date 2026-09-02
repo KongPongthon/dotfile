@@ -1,14 +1,32 @@
-# Dotfiles / secrets / caches
-.dotfiles-backup-*/
-Install-Logs/
-*.log
+# OS / Editor temporary files
+*.tmp
+*.bak
+*.swp
+*.swo
+*~
 .DS_Store
 
+# Logs and runtime caches
+*.log
+fish_variables
+.dotfiles-backup-*/
+Install-Logs/
+
+# Private / machine-local configurations
+*.local
+*.local.*
+.env
+.env.*
+secrets/
+
 # Large local wallpaper libraries (repo keeps a small starter set)
-# Add personal huge collections outside git, e.g. ~/รูปภาพ/wallpapers
 .wallpapers/
 
 # Editor
 .vscode/
 .cursor/
-*.swp
+
+# Per-machine pointers created by install.sh (see hosts/README.md)
+.config/waybar/host.jsonc
+.config/kanshi/config
+.config/easyeffects/db/*.lock

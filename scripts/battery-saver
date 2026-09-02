@@ -1,0 +1,260 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# Battery saver for laptops on Hyprland + Waybar
+# ==============================================================================
+#
+# Power profile switching is delegated to `waybar-fan` so that the Waybar
+# custom/fan module keeps showing the truth; this script adds the levers
+# waybar-fan does not touch (CPU boost, energy-performance preference) and the
+# policy that decides when to pull them.
+#
+#   battery-saver status     JSON for the Waybar custom/battery-saver module
+#   battery-saver toggle     force saver on, or back to automatic
+#   battery-saver on|off     pin the saver on or off, ignoring AC state
+#   battery-saver auto       hand control back to the AC/low-battery policy
+#   battery-saver daemon     the policy loop, started from Hyprland autostart
+#
+# The pinned mode lives in $XDG_RUNTIME_DIR, so it resets on every login.
+
+set -euo pipefail
+
+STATE_DIR="${XDG_RUNTIME_DIR:-/tmp}"
+MODE_FILE="$STATE_DIR/battery-saver.mode"     # auto | on | off
+APPLIED_FILE="$STATE_DIR/battery-saver.applied" # saver | normal
+NOTIFIED_FILE="$STATE_DIR/battery-saver.notified-low"
+
+# Battery percentage at or below which the policy forces the saver on, even
+# though nothing else has changed.
+LOW_THRESHOLD="${BATTERY_SAVER_LOW:-20}"
+POLL_SECONDS="${BATTERY_SAVER_POLL:-20}"
+
+# ------------------------------------------------------------------ helpers --
+
+battery_path() {
+    local p
+    for p in /sys/class/power_supply/*; do
+        [ -r "$p/type" ] || continue
+        [ "$(cat "$p/type")" = "Battery" ] || continue
+        # Skip peripheral batteries (mice, headsets) that expose no capacity.
+        [ -r "$p/capacity" ] || continue
+        printf '%s' "$p"
+        return 0
+    done
+    return 1
+}
+
+battery_capacity() {
+    local bat
+    bat="$(battery_path)" || { printf '%s' ""; return 1; }
+    cat "$bat/capacity"
+}
+
+battery_status() {
+    local bat
+    bat="$(battery_path)" || { printf '%s' "Unknown"; return 1; }
+    cat "$bat/status"
+}
+
+on_ac() {
+    local p online
+    for p in /sys/class/power_supply/*; do
+        [ -r "$p/type" ] || continue
+        [ "$(cat "$p/type")" = "Mains" ] || continue
+        online="$(cat "$p/online" 2>/dev/null || echo 0)"
+        [ "$online" = "1" ] && return 0
+    done
+    return 1
+}
+
+read_mode() {
+    if [ -r "$MODE_FILE" ]; then
+        cat "$MODE_FILE"
+    else
+        echo "auto"
+    fi
+}
+
+write_mode() {
+    printf '%s\n' "$1" >"$MODE_FILE"
+}
+
+notify() {
+    command -v notify-send >/dev/null 2>&1 || return 0
+    notify-send -a "Battery Saver" -i "battery-low" "$1" "$2"
+}
+
+# ------------------------------------------------------------------- levers --
+
+# CPU boost and EPP live in root-owned sysfs. Every write is guarded, so on a
+# machine where they are not writable the power profile still switches and the
+# script stays silent instead of failing.
+set_cpu_boost() {
+    local value="$1" # 1 = allowed, 0 = disabled
+    local f="/sys/devices/system/cpu/cpufreq/boost"
+    [ -w "$f" ] && echo "$value" >"$f" 2>/dev/null || true
+}
+
+set_epp() {
+    local value="$1"
+    local f
+    for f in /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference; do
+        [ -w "$f" ] && echo "$value" >"$f" 2>/dev/null || true
+    done
+}
+
+# What is actually in force right now. The cache file is authoritative once the
+# daemon has run; before that, fall back to asking the power profile daemon, so
+# a fresh login reports the truth instead of a guess.
+current_applied() {
+    if [ -r "$APPLIED_FILE" ]; then
+        cat "$APPLIED_FILE"
+        return
+    fi
+    if command -v powerprofilesctl >/dev/null 2>&1 &&
+        [ "$(powerprofilesctl get 2>/dev/null || echo "")" = "power-saver" ]; then
+        echo "saver"
+        return
+    fi
+    echo "normal"
+}
+
+apply_saver() {
+    [ "$(current_applied)" = "saver" ] && return 0
+    waybar-fan power-saver >/dev/null 2>&1 || true
+    set_cpu_boost 0
+    set_epp power
+    echo "saver" >"$APPLIED_FILE"
+}
+
+apply_normal() {
+    [ "$(current_applied)" = "normal" ] && return 0
+    waybar-fan balanced >/dev/null 2>&1 || true
+    set_cpu_boost 1
+    set_epp balance_performance
+    echo "normal" >"$APPLIED_FILE"
+}
+
+# Decide and apply, based on the pinned mode and the current power state.
+reconcile() {
+    local mode capacity
+    mode="$(read_mode)"
+
+    case "$mode" in
+        on)
+            apply_saver
+            return
+            ;;
+        off)
+            apply_normal
+            return
+            ;;
+    esac
+
+    # mode = auto
+    capacity="$(battery_capacity || echo 100)"
+
+    if on_ac; then
+        rm -f "$NOTIFIED_FILE"
+        apply_normal
+        return
+    fi
+
+    apply_saver
+
+    if [ -n "$capacity" ] && [ "$capacity" -le "$LOW_THRESHOLD" ] && [ ! -e "$NOTIFIED_FILE" ]; then
+        notify "Battery low: ${capacity}%" "Saver is on. Plug in soon."
+        : >"$NOTIFIED_FILE"
+    fi
+}
+
+# ------------------------------------------------------------------ commands --
+
+cmd_status() {
+    local mode applied capacity bat_status icon text class tooltip
+
+    mode="$(read_mode)"
+    applied="$(current_applied)"
+    capacity="$(battery_capacity || echo "")"
+    bat_status="$(battery_status || echo "Unknown")"
+
+    if [ "$applied" = "saver" ]; then
+        icon="󰾆"
+        class="saver"
+    else
+        icon="󰾅"
+        class="normal"
+    fi
+
+    case "$mode" in
+        auto) text="$icon" ;;
+        on) text="$icon 󰐃" ;;   # pinned on
+        off) text="$icon 󰜺" ;;  # pinned off
+    esac
+
+    tooltip="<b>Battery Saver</b>"
+    tooltip="$tooltip\n<b>State:</b> $applied"
+    tooltip="$tooltip\n<b>Control:</b> $mode"
+    [ -n "$capacity" ] && tooltip="$tooltip\n<b>Battery:</b> ${capacity}% ($bat_status)"
+    tooltip="$tooltip\n<b>Low threshold:</b> ${LOW_THRESHOLD}%"
+    tooltip="$tooltip\n\n<b>Left-click:</b> Force saver on / back to automatic"
+    tooltip="$tooltip\n<b>Right-click:</b> Pin saver off"
+
+    printf '{"text":"%s","tooltip":"%s","class":"%s %s"}\n' \
+        "$text" "$tooltip" "$class" "$mode"
+}
+
+cmd_set() {
+    local mode="$1"
+    write_mode "$mode"
+    rm -f "$NOTIFIED_FILE"
+    reconcile
+
+    case "$mode" in
+        on) notify "Battery Saver: ON" "Pinned on. Power-saver profile, CPU boost off." ;;
+        off) notify "Battery Saver: OFF" "Pinned off. Balanced profile, CPU boost on." ;;
+        auto) notify "Battery Saver: AUTO" "Follows AC state and the ${LOW_THRESHOLD}% threshold." ;;
+    esac
+}
+
+cmd_toggle() {
+    # Toggle between "force it on" and "let the policy decide", which is the
+    # pair that is actually useful from a click; pinning off is the right-click.
+    if [ "$(read_mode)" = "on" ]; then
+        cmd_set auto
+    else
+        cmd_set on
+    fi
+}
+
+cmd_daemon() {
+    # A single instance: racing starts from Hyprland reloads are no-ops.
+    exec 9>"$STATE_DIR/battery-saver.lock"
+    flock -n 9 || exit 0
+
+    battery_path >/dev/null || {
+        echo "battery-saver: no battery found, daemon not needed" >&2
+        exit 0
+    }
+
+    while true; do
+        reconcile
+        sleep "$POLL_SECONDS"
+    done
+}
+
+case "${1:-status}" in
+    status) cmd_status ;;
+    toggle) cmd_toggle ;;
+    on) cmd_set on ;;
+    off) cmd_set off ;;
+    auto) cmd_set auto ;;
+    daemon) cmd_daemon ;;
+    -h | --help | help)
+        sed -n '2,20p' "$0" | sed 's/^# \?//'
+        ;;
+    *)
+        echo "battery-saver: unknown command: $1" >&2
+        echo "usage: battery-saver [status|toggle|on|off|auto|daemon]" >&2
+        exit 1
+        ;;
+esac

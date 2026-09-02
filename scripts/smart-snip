@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+# Smart Screenshot Script
+# Left-Click Drag: Copy to Clipboard directly
+# Right-Click Drag: Open Swappy Editor (Crop, Arrow, Text, Shapes, Blur)
+
+SLURP_BIN="slurp"
+if [ -x "$HOME/.local/bin/slurp" ]; then
+    SLURP_BIN="$HOME/.local/bin/slurp"
+fi
+
+REGION=$("$SLURP_BIN")
+STATUS=$?
+
+if [ "$STATUS" -eq 0 ] && [ -n "$REGION" ]; then
+    grim -g "$REGION" - | wl-copy
+elif [ "$STATUS" -eq 2 ] && [ -n "$REGION" ]; then
+    grim -g "$REGION" - | swappy -f -
+fi

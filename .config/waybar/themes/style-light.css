@@ -1,0 +1,225 @@
+/* Waybar Rumda Light x Rainy Keyboard Theme */
+
+@define-color bg #F4EFEA;
+@define-color fg #2B2538;
+@define-color fg_sub #534C64;
+@define-color surface #E8DFD7;
+@define-color border #C8B9AC;
+@define-color hover #D8CBC0;
+
+@define-color purple_light #8E86C6;
+@define-color purple_base #6E64A6;
+@define-color purple_dark #534988;
+@define-color purple_deep #383060;
+
+@define-color blue_base #4A6D8C;
+@define-color blue_shadow #334B62;
+@define-color cyan #2D7B8C;
+
+@define-color active #6E64A6;
+@define-color active_fg #F4EFEA;
+@define-color dim #8A8099;
+@define-color bright #2B2538;
+@define-color warning #C57434;
+@define-color danger #B5483B;
+
+* {
+    border: none;
+    border-radius: 0;
+    font-family: "Silkscreen", "JetBrains Mono", "MesloLGS Nerd Font", monospace;
+    font-size: 11px;
+    font-weight: 500;
+    min-height: 0;
+}
+
+window#waybar {
+    background: @bg;
+    color: @fg;
+    border: 1px solid @border;
+    border-radius: 12px;
+}
+
+/* Tooltip Popover */
+tooltip {
+    background: @surface;
+    border: 1px solid @purple_base;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+tooltip label {
+    color: @fg;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px;
+    padding: 6px 10px;
+}
+
+/* Individual Module Containers */
+#workspaces,
+#window,
+#clock,
+#mpris,
+#privacy,
+#idle_inhibitor,
+#language,
+#backlight,
+#temperature,
+#custom-fan,
+#cpu,
+#memory,
+#disk,
+#custom-updates,
+#pulseaudio,
+#pulseaudio.microphone,
+#network,
+#bluetooth,
+#battery,
+#custom-battery-saver,
+#tray,
+#custom-power {
+    background: @surface;
+    border: 1px solid @border;
+    border-radius: 6px;
+    padding: 2px 10px;
+    margin: 4px 3px;
+}
+
+/* Hover States */
+#clock:hover,
+#mpris:hover,
+#privacy:hover,
+#idle_inhibitor:hover,
+#language:hover,
+#backlight:hover,
+#temperature:hover,
+#custom-fan:hover,
+#cpu:hover,
+#memory:hover,
+#disk:hover,
+#custom-updates:hover,
+#pulseaudio:hover,
+#pulseaudio.microphone:hover,
+#network:hover,
+#bluetooth:hover,
+#battery:hover,
+#custom-battery-saver:hover,
+#tray:hover {
+    background: @hover;
+    border-color: @purple_base;
+}
+
+/* Workspaces Module */
+#workspaces {
+    padding: 1px 4px;
+}
+
+#workspaces button {
+    padding: 2px 8px;
+    color: @dim;
+    background: transparent;
+    border-radius: 4px;
+    margin: 0 1px;
+}
+
+#workspaces button:hover {
+    background: @hover;
+    color: @blue_base;
+}
+
+#workspaces button.active {
+    color: @active_fg;
+    background: @purple_base;
+    font-weight: bold;
+    border-radius: 4px;
+}
+
+#workspaces button.urgent {
+    background: @danger;
+    color: @active_fg;
+}
+
+/* Window Title Module */
+#window {
+    color: @blue_base;
+    background: transparent;
+    border: none;
+    font-weight: 500;
+}
+
+/* Clock Module */
+#clock {
+    background: @surface;
+    color: @cyan;
+    font-weight: bold;
+    border-color: @purple_base;
+}
+
+/* Modules Text Colors */
+#mpris { color: @fg; }
+#privacy { color: @purple_base; border-color: @purple_base; }
+#idle_inhibitor { color: @blue_base; padding: 2px 8px; }
+#idle_inhibitor.activated { background: @purple_base; color: @active_fg; }
+#language { color: @blue_base; min-width: 24px; }
+
+#backlight { color: @warning; }
+
+#temperature { color: @blue_base; }
+#temperature.critical { color: @danger; border-color: @danger; font-weight: bold; }
+
+#custom-fan { color: @fg_sub; }
+#custom-fan.boost,
+#custom-fan.performance { color: @purple_base; border-color: @purple_base; font-weight: bold; }
+#custom-fan.auto,
+#custom-fan.balanced { color: @blue_base; }
+#custom-fan.silent,
+#custom-fan.power-saver { color: @dim; }
+
+#battery { color: @cyan; }
+#battery.charging,
+#battery.plugged { color: @purple_light; }
+#battery.warning:not(.charging) { color: @warning; }
+#battery.critical:not(.charging) { color: @danger; border-color: @danger; font-weight: bold; }
+
+/* The saver indicator: dim while it is idle, lit while it is holding the
+   machine down, outlined when the automatic policy has been overridden. */
+#custom-battery-saver { color: @dim; }
+#custom-battery-saver.saver { color: @cyan; }
+#custom-battery-saver.on,
+#custom-battery-saver.off { border-color: @purple_light; font-weight: bold; }
+
+#cpu { color: @fg_sub; }
+#cpu.warning { color: @warning; }
+#cpu.critical { color: @danger; font-weight: bold; }
+
+#memory { color: @fg_sub; }
+#memory.warning { color: @warning; }
+#memory.critical { color: @danger; font-weight: bold; }
+
+#disk { color: @dim; }
+#custom-updates { color: @purple_base; }
+
+#pulseaudio { color: @blue_base; }
+#pulseaudio.microphone { color: @dim; }
+#pulseaudio.muted,
+#pulseaudio.source-muted { color: @danger; }
+
+#network { color: @cyan; }
+#network.disconnected { color: @danger; }
+#bluetooth { color: @blue_base; padding: 2px 8px; }
+#bluetooth.disabled { color: @dim; }
+
+/* System Power Button */
+#custom-power {
+    color: @purple_base;
+    background: @surface;
+    border: 1px solid @border;
+    padding: 2px 10px;
+    border-radius: 6px;
+    margin-right: 4px;
+}
+
+#custom-power:hover {
+    background: @purple_base;
+    color: @active_fg;
+    border-color: @purple_light;
+}

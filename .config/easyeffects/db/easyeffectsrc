@@ -1,0 +1,13 @@
+[StreamInputs]
+inputDevice=alsa_input.pci-0000_06_00.6.HiFi__Mic1__source
+plugins=pitch#0,gate#0,rnnoise#0,equalizer#0,compressor#0,limiter#0
+visiblePage=pluginsPage
+visiblePlugin=gate#0
+
+[StreamOutputs]
+outputDevice=alsa_output.pci-0000_06_00.6.HiFi__Speaker__sink
+
+[Window]
+height=1016
+visiblePage=inputPage
+width=944

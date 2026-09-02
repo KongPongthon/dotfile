@@ -1,0 +1,47 @@
+{
+  "agent_servers": {
+    "claude-acp": {
+      "type": "registry"
+    }
+  },
+  "agent": {
+    "terminal_init_command": "",
+    "sandbox_permissions": {
+      "allow_unsandboxed": false
+    },
+    "favorite_models": [],
+    "model_parameters": [],
+    "tool_permissions": {
+      "default": "allow",
+      "tools": {
+        "terminal": {
+          "always_deny": [
+            {
+              "pattern": "rm -rf"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "session": {
+    "trust_all_worktrees": false
+  },
+  "icon_theme": "Zed (Default)",
+  "base_keymap": "VSCode",
+  "ui_font_size": 16,
+  "buffer_font_size": 15,
+  "format_on_save": "on",
+  "remove_trailing_whitespace_on_save": true,
+  "ensure_final_newline_on_save": true,
+  "theme": {
+    "mode": "system",
+    "light": "Gruvbox Light",
+    "dark": "Gruvbox Dark Hard"
+  },
+  "tasks": {
+    "variables": {},
+    "enabled": true,
+    "prefer_lsp": false
+  }
+}

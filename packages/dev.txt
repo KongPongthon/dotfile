@@ -1,0 +1,17 @@
+# Reproducible project environments and developer ergonomics
+mise
+git-delta
+atuin
+pre-commit
+shellcheck
+shfmt
+stylua
+lua-language-server
+lua
+yq
+python
+watchexec
+hyperfine
+lazygit
+docker
+docker-compose

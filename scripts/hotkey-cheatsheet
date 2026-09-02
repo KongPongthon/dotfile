@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# Hotkey Cheatsheet Overlay Launcher (Quickshell)
+# ==============================================================================
+
+set -euo pipefail
+
+# If quickshell cheatsheet is already running, toggle it off
+if pgrep -f 'quickshell.*(\.config/quickshell|shell\.qml)' >/dev/null 2>&1; then
+    pkill -f 'quickshell.*(\.config/quickshell|shell\.qml)' || true
+    exit 0
+fi
+
+# Ensure quickshell command is installed
+if ! command -v quickshell >/dev/null 2>&1; then
+    notify-send "⌨️ Hotkeys Cheatsheet" "Quickshell is not installed.\nRun 'install-dotfiles-packages desktop' or 'sudo pacman -S quickshell'" -u normal -a "Hotkeys"
+    exit 1
+fi
+
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell"
+
+# Launch quickshell with our config
+exec quickshell -p "$CONFIG_DIR"

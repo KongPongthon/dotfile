@@ -1,0 +1,425 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# Universal Power Profile & Fan Controller for Waybar (HP Victus / MSI / ASUS / Linux)
+# ==============================================================================
+
+set -euo pipefail
+
+get_device_model() {
+    local model=""
+    if [ -f "/sys/devices/virtual/dmi/id/product_name" ]; then
+        model="$(tr -d '\n\r' <"/sys/devices/virtual/dmi/id/product_name" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+    fi
+    if [ -z "$model" ] || [ "$model" = "System Product Name" ] || [ "$model" = "Default string" ]; then
+        if [ -f "/sys/devices/virtual/dmi/id/board_name" ]; then
+            model="$(tr -d '\n\r' <"/sys/devices/virtual/dmi/id/board_name" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+        fi
+    fi
+    [ -n "$model" ] && echo "$model" || echo "Linux System"
+}
+
+get_power_profile() {
+    if command -v powerprofilesctl >/dev/null 2>&1; then
+        local p
+        p="$(powerprofilesctl get 2>/dev/null || echo "")"
+        if [ -n "$p" ]; then
+            echo "$p"
+            return
+        fi
+    fi
+    if [ -f "/sys/firmware/acpi/platform_profile" ]; then
+        local p
+        p="$(cat /sys/firmware/acpi/platform_profile 2>/dev/null || echo "")"
+        case "$p" in
+            performance) echo "performance" ;;
+            balanced) echo "balanced" ;;
+            low-power | quiet) echo "power-saver" ;;
+            *) [ -n "$p" ] && echo "$p" || echo "balanced" ;;
+        esac
+        return
+    fi
+    echo "balanced"
+}
+
+get_cpu_governor_info() {
+    local gov="" epp=""
+    if [ -f "/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor" ]; then
+        gov="$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor 2>/dev/null || echo "")"
+    fi
+    if [ -f "/sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference" ]; then
+        epp="$(cat /sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference 2>/dev/null || echo "")"
+    fi
+    if [ -n "$gov" ] && [ -n "$epp" ]; then
+        echo "${gov} (EPP: ${epp})"
+    elif [ -n "$gov" ]; then
+        echo "${gov}"
+    elif [ -n "$epp" ]; then
+        echo "EPP: ${epp}"
+    else
+        echo "unknown"
+    fi
+}
+
+get_cpu_temp() {
+    # 1. k10temp (AMD Ryzen)
+    for f in /sys/class/hwmon/hwmon*/temp1_input; do
+        local name_file
+        name_file="$(dirname "$f")/name"
+        if [ -f "$name_file" ] && [ "$(cat "$name_file" 2>/dev/null)" = "k10temp" ]; then
+            local raw
+            raw="$(cat "$f" 2>/dev/null || echo "")"
+            if [ -n "$raw" ] && [ "$raw" -gt 0 ]; then
+                echo $((raw / 1000))
+                return
+            fi
+        fi
+    done
+
+    # 2. coretemp (Intel Core)
+    for f in /sys/class/hwmon/hwmon*/temp1_input; do
+        local name_file
+        name_file="$(dirname "$f")/name"
+        if [ -f "$name_file" ] && [ "$(cat "$name_file" 2>/dev/null)" = "coretemp" ]; then
+            local raw
+            raw="$(cat "$f" 2>/dev/null || echo "")"
+            if [ -n "$raw" ] && [ "$raw" -gt 0 ]; then
+                echo $((raw / 1000))
+                return
+            fi
+        fi
+    done
+
+    # 3. acpitz / thermal zone
+    for f in /sys/class/thermal/thermal_zone*/temp; do
+        local raw
+        raw="$(cat "$f" 2>/dev/null || echo "")"
+        if [ -n "$raw" ] && [ "$raw" -gt 0 ]; then
+            echo $((raw / 1000))
+            return
+        fi
+    done
+
+    # 4. Fallback to any hwmon temp
+    for f in /sys/class/hwmon/hwmon*/temp1_input; do
+        local raw
+        raw="$(cat "$f" 2>/dev/null || echo "")"
+        if [ -n "$raw" ] && [ "$raw" -gt 0 ]; then
+            echo $((raw / 1000))
+            return
+        fi
+    done
+
+    echo "0"
+}
+
+get_gpu_info() {
+    local gpus=()
+    # NVIDIA dGPU
+    if command -v nvidia-smi >/dev/null 2>&1; then
+        local nv_temp
+        nv_temp="$(nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader,nounits 2>/dev/null | head -n1 || echo "")"
+        if [ -n "$nv_temp" ]; then
+            gpus+=("NVIDIA: ${nv_temp}°C")
+        fi
+    fi
+    # AMD iGPU / dGPU
+    for f in /sys/class/hwmon/hwmon*/temp1_input; do
+        local name_file
+        name_file="$(dirname "$f")/name"
+        if [ -f "$name_file" ] && [ "$(cat "$name_file" 2>/dev/null)" = "amdgpu" ]; then
+            local raw
+            raw="$(cat "$f" 2>/dev/null || echo "")"
+            if [ -n "$raw" ] && [ "$raw" -gt 0 ]; then
+                gpus+=("Radeon: $((raw / 1000))°C")
+            fi
+        fi
+    done
+    if ((${#gpus[@]} > 0)); then
+        local out=""
+        for g in "${gpus[@]}"; do
+            [ -n "$out" ] && out+=", "
+            out+="$g"
+        done
+        echo "$out"
+    else
+        echo "N/A"
+    fi
+}
+
+apply_mode() {
+    local target="$1"
+    local notify_title=""
+    local notify_body=""
+
+    case "$target" in
+        max | boost | performance | perf)
+            # 1. power-profiles-daemon
+            if command -v powerprofilesctl >/dev/null 2>&1; then
+                powerprofilesctl set performance 2>/dev/null || true
+            fi
+            # 2. direct platform_profile if accessible
+            if [ -w "/sys/firmware/acpi/platform_profile" ]; then
+                echo "performance" >/sys/firmware/acpi/platform_profile 2>/dev/null || true
+            fi
+            # 3. MSI EC sysfs if available
+            if [ -w "/sys/devices/platform/msi-ec/cooler_boost" ]; then
+                echo "on" >"/sys/devices/platform/msi-ec/cooler_boost" 2>/dev/null || true
+                echo "turbo" >"/sys/devices/platform/msi-ec/shift_mode" 2>/dev/null || true
+            fi
+            # 4. ASUS ROG if available
+            if command -v asusctl >/dev/null 2>&1; then
+                asusctl profile -P Performance 2>/dev/null || true
+            fi
+
+            notify_title="Performance Mode"
+            notify_body="High performance TDP & aggressive cooling activated"
+            ;;
+
+        balanced | auto | normal | default)
+            # 1. power-profiles-daemon
+            if command -v powerprofilesctl >/dev/null 2>&1; then
+                powerprofilesctl set balanced 2>/dev/null || true
+            fi
+            # 2. direct platform_profile if accessible
+            if [ -w "/sys/firmware/acpi/platform_profile" ]; then
+                echo "balanced" >/sys/firmware/acpi/platform_profile 2>/dev/null || true
+            fi
+            # 3. MSI EC sysfs if available
+            if [ -w "/sys/devices/platform/msi-ec/cooler_boost" ]; then
+                echo "off" >"/sys/devices/platform/msi-ec/cooler_boost" 2>/dev/null || true
+                echo "auto" >"/sys/devices/platform/msi-ec/fan_mode" 2>/dev/null || true
+                echo "comfort" >"/sys/devices/platform/msi-ec/shift_mode" 2>/dev/null || true
+            fi
+            # 4. ASUS ROG if available
+            if command -v asusctl >/dev/null 2>&1; then
+                asusctl profile -P Balanced 2>/dev/null || true
+            fi
+
+            notify_title="Balanced Mode"
+            notify_body="Standard power profile & dynamic auto fan activated"
+            ;;
+
+        silent | quiet | saver | power-saver | eco | low-power)
+            # 1. power-profiles-daemon
+            if command -v powerprofilesctl >/dev/null 2>&1; then
+                powerprofilesctl set power-saver 2>/dev/null || true
+            fi
+            # 2. direct platform_profile if accessible
+            if [ -w "/sys/firmware/acpi/platform_profile" ]; then
+                echo "low-power" >/sys/firmware/acpi/platform_profile 2>/dev/null || true
+            fi
+            # 3. MSI EC sysfs if available
+            if [ -w "/sys/devices/platform/msi-ec/cooler_boost" ]; then
+                echo "off" >"/sys/devices/platform/msi-ec/cooler_boost" 2>/dev/null || true
+                echo "silent" >"/sys/devices/platform/msi-ec/fan_mode" 2>/dev/null || true
+                echo "eco" >"/sys/devices/platform/msi-ec/shift_mode" 2>/dev/null || true
+            fi
+            # 4. ASUS ROG if available
+            if command -v asusctl >/dev/null 2>&1; then
+                asusctl profile -P Quiet 2>/dev/null || true
+            fi
+
+            notify_title="Power-Saver Mode"
+            notify_body="Quiet cooling & energy saving profile activated"
+            ;;
+
+        *)
+            echo "Unknown mode: $target" >&2
+            return 1
+            ;;
+    esac
+
+    if command -v notify-send >/dev/null 2>&1 && [ -n "$notify_title" ]; then
+        notify-send -a "Power & Fan" -i "preferences-system-power" "$notify_title" "$notify_body"
+    fi
+}
+
+get_status() {
+    local model
+    model="$(get_device_model)"
+    local pwr_profile
+    pwr_profile="$(get_power_profile)"
+    local gov_info
+    gov_info="$(get_cpu_governor_info)"
+    local cpu_temp
+    cpu_temp="$(get_cpu_temp)"
+    local gpu_info
+    gpu_info="$(get_gpu_info)"
+
+    # Fan Detection
+    local fan_rpms=()
+    local fan_details=""
+    local fan_summary="Auto"
+    local fan_pct=0
+
+    # 1. MSI EC realtime fan speed
+    if [ -f "/sys/devices/platform/msi-ec/cpu/realtime_fan_speed" ]; then
+        fan_pct="$(cat /sys/devices/platform/msi-ec/cpu/realtime_fan_speed 2>/dev/null || echo "0")"
+        fan_summary="${fan_pct}%"
+        fan_details="<b>Fan Speed:</b> ${fan_pct}%"
+    else
+        # 2. General hwmon fan inputs (HP Victus / ASUS / Generic Linux)
+        local fan_idx=1
+        for f in /sys/class/hwmon/hwmon*/fan*_input; do
+            if [ -f "$f" ]; then
+                local rpm
+                rpm="$(cat "$f" 2>/dev/null || echo "0")"
+                if [ -n "$rpm" ] && [ "$rpm" -ge 0 ]; then
+                    fan_rpms+=("$rpm")
+                    local label_file="${f%_input}_label"
+                    local label=""
+                    [ -f "$label_file" ] && label="$(cat "$label_file" 2>/dev/null || echo "")"
+                    if [ -z "$label" ]; then
+                        if [ "$fan_idx" -eq 1 ]; then
+                            label="Fan 1 (CPU)"
+                        elif [ "$fan_idx" -eq 2 ]; then
+                            label="Fan 2 (GPU)"
+                        else
+                            label="Fan ${fan_idx}"
+                        fi
+                    fi
+                    if [ -n "$fan_details" ]; then
+                        fan_details+=$'\n'
+                    fi
+                    fan_details+="<b>${label}:</b> ${rpm} RPM"
+                    fan_idx=$((fan_idx + 1))
+                fi
+            fi
+        done
+
+        if [ "${#fan_rpms[@]}" -gt 0 ]; then
+            local sum=0
+            for r in "${fan_rpms[@]}"; do
+                sum=$((sum + r))
+            done
+            local avg_rpm=$((sum / ${#fan_rpms[@]}))
+            fan_pct=$((avg_rpm * 100 / 5500))
+            [ "$fan_pct" -gt 100 ] && fan_pct=100
+
+            if [ "$avg_rpm" -ge 1000 ]; then
+                local k_val=$((avg_rpm / 100))
+                local int_part=$((k_val / 10))
+                local dec_part=$((k_val % 10))
+                fan_summary="${int_part}.${dec_part}k RPM"
+            elif [ "$avg_rpm" -gt 0 ]; then
+                fan_summary="${avg_rpm} RPM"
+            else
+                fan_summary="0 RPM"
+            fi
+        else
+            fan_details="<b>Fans:</b> Dynamic Auto"
+            case "$pwr_profile" in
+                performance | boost) fan_pct=100 ;;
+                power-saver | silent | quiet | low-power) fan_pct=20 ;;
+                balanced | *) fan_pct=50 ;;
+            esac
+        fi
+    fi
+
+    local text=""
+    local class=""
+    local mode_title=""
+
+    case "$pwr_profile" in
+        performance | boost)
+            text="<span foreground='#f7768e'>󰓅</span> Perf (${fan_summary})"
+            class="performance boost"
+            mode_title="Performance Mode (High Power &amp; Boost Cooling)"
+            ;;
+        power-saver | silent | quiet | low-power)
+            text="<span foreground='#73daca'>󰌪</span> Quiet (${fan_summary})"
+            class="power-saver silent"
+            mode_title="Power-Saver / Quiet Mode (Eco &amp; Whisper Fan)"
+            ;;
+        balanced | *)
+            text="<span foreground='#7aa2f7'>󰾆</span> Bal (${fan_summary})"
+            class="balanced auto"
+            mode_title="Balanced Mode (Dynamic Power &amp; Auto Fan)"
+            ;;
+    esac
+
+    local tooltip="<b>${model} Power &amp; Fan Control</b>
+────────────────────────────
+<b>Mode:</b> ${mode_title}
+<b>Power Profile:</b> ${pwr_profile}
+<b>CPU Scaling:</b> ${gov_info}
+<b>CPU Temp:</b> ${cpu_temp}°C
+<b>GPU Temp:</b> ${gpu_info}
+────────────────────────────
+${fan_details}
+
+<b>Left-click:</b> Cycle Profile (Perf ➔ Bal ➔ Quiet)
+<b>Right-click:</b> Open Power &amp; Fan Menu"
+
+    jq -c -n \
+        --arg text "$text" \
+        --arg tooltip "$tooltip" \
+        --arg class "$class" \
+        --argjson percentage "$fan_pct" \
+        '{text: $text, tooltip: $tooltip, class: $class, percentage: $percentage}'
+}
+
+toggle_mode() {
+    local current
+    current="$(get_power_profile)"
+    case "$current" in
+        performance | boost)
+            apply_mode "balanced"
+            ;;
+        balanced | auto)
+            apply_mode "power-saver"
+            ;;
+        power-saver | silent | quiet | low-power)
+            apply_mode "performance"
+            ;;
+        *)
+            apply_mode "performance"
+            ;;
+    esac
+}
+
+show_menu() {
+    local prompt="󰓅 Power & Fan: "
+    local items=(
+        "󰓅 Performance Mode (High TDP / Boost Fan)"
+        "󰾆 Balanced Mode (Dynamic / Standard Fan)"
+        "󰌪 Power-Saver Mode (Quiet Fan / Battery Save)"
+    )
+    local menu_input
+    menu_input="$(printf '%s\n' "${items[@]}")"
+
+    local choice
+    choice="$(echo "$menu_input" | fuzzel --dmenu --prompt="$prompt" --lines=3 --width=44 || true)"
+    case "$choice" in
+        *"Performance"*) apply_mode "performance" ;;
+        *"Balanced"*) apply_mode "balanced" ;;
+        *"Power-Saver"*) apply_mode "power-saver" ;;
+    esac
+}
+
+mode="${1:-status}"
+
+case "$mode" in
+    status)
+        get_status
+        ;;
+    toggle)
+        toggle_mode
+        ;;
+    menu)
+        show_menu
+        ;;
+    max | boost | performance | perf)
+        apply_mode "performance"
+        ;;
+    auto | smart | balanced | bal | normal)
+        apply_mode "balanced"
+        ;;
+    silent | quiet | saver | power-saver | eco)
+        apply_mode "power-saver"
+        ;;
+    *)
+        echo "Usage: waybar-fan [status|toggle|menu|performance|balanced|power-saver]"
+        exit 1
+        ;;
+esac

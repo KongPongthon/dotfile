@@ -1,0 +1,9 @@
+font=Silkscreen 10
+background-color=#E8DFD7ee
+text-color=#2B2538ff
+border-color=#6E64A6ff
+border-size=2
+border-radius=10
+default-timeout=5000
+layer=overlay
+max-visible=5

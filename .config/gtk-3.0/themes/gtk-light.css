@@ -1,0 +1,21 @@
+/* Rumda Light x Rainy Keyboard GTK Theme */
+@define-color theme_bg_color #F4EFEA;
+@define-color theme_fg_color #2B2538;
+@define-color theme_base_color #E8DFD7;
+@define-color theme_text_color #2B2538;
+@define-color theme_selected_bg_color #6E64A6;
+@define-color theme_selected_fg_color #F4EFEA;
+@define-color theme_tooltip_bg_color #E8DFD7;
+@define-color theme_tooltip_fg_color #2B2538;
+
+@define-color headerbar_bg_color #E8DFD7;
+@define-color headerbar_fg_color #2B2538;
+
+@define-color window_bg_color #F4EFEA;
+@define-color window_fg_color #2B2538;
+@define-color view_bg_color #E8DFD7;
+@define-color view_fg_color #2B2538;
+
+@define-color accent_color #6E64A6;
+@define-color accent_bg_color #6E64A6;
+@define-color accent_fg_color #F4EFEA;
