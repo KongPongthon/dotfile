@@ -43,7 +43,7 @@ fi
 
 if ((${#pacman_packages[@]} > 0)); then
     printf 'Installing %d pacman packages from: %s\n' "${#pacman_packages[@]}" "${categories[*]}"
-    sudo pacman -S --needed "${pacman_packages[@]}"
+    sudo pacman -Syu --needed "${pacman_packages[@]}"
 fi
 
 if ((${#aur_packages[@]} > 0)); then

@@ -1,7 +1,5 @@
 # Hyprland desktop and utilities represented by this repository
 hyprland
-hyprland-guiutils
-hyprtoolkit
 xdg-desktop-portal-hyprland
 xdg-desktop-portal-gtk
 hyprpolkitagent
