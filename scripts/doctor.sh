@@ -60,7 +60,7 @@ for command_name in git jq zsh starship hyprctl waybar kitty fuzzel swaync grim 
 done
 
 printf '\nOptional / Developer Commands:\n'
-for command_name in atuin delta easyeffects lazygit luac mise pre-commit quickshell shellcheck shfmt stylua tesseract watchexec yq fish swappy hyprpicker cursor google-chrome-stable; do
+for command_name in atuin delta easyeffects lazygit luac mise pre-commit quickshell shellcheck shfmt stylua tesseract watchexec yq fish swappy hyprpicker cursor google-chrome-stable gnome-keyring-daemon; do
     check_command "$command_name" optional
 done
 
@@ -81,6 +81,9 @@ check_link "$HOME/.config/swaync" "$REPO_DIR/.config/swaync"
 check_link "$HOME/.config/wlogout" "$REPO_DIR/.config/wlogout"
 check_link "$HOME/.config/atuin" "$REPO_DIR/.config/atuin"
 check_link "$HOME/.config/quickshell" "$REPO_DIR/.config/quickshell"
+check_link "$HOME/.config/chrome-flags.conf" "$REPO_DIR/.config/chrome-flags.conf"
+check_link "$HOME/.config/cursor-flags.conf" "$REPO_DIR/.config/cursor-flags.conf"
+check_link "$HOME/.config/electron-flags.conf" "$REPO_DIR/.config/electron-flags.conf"
 check_link "$HOME/.zshrc" "$REPO_DIR/shell/.zshrc"
 
 printf '\nHost Layer (%s):\n' "$host_id"
@@ -102,6 +105,7 @@ check_link "$HOME/.local/bin/dotfiles-host-id" "$REPO_DIR/scripts/host-id"
 check_link "$HOME/.local/bin/install-dotfiles-packages" "$REPO_DIR/scripts/install-packages.sh"
 check_link "$HOME/.local/bin/network-menu" "$REPO_DIR/scripts/network-menu"
 check_link "$HOME/.local/bin/ocr-snip" "$REPO_DIR/scripts/ocr-snip"
+check_link "$HOME/.local/bin/session-secrets" "$REPO_DIR/scripts/session-secrets"
 check_link "$HOME/.local/bin/powermenu" "$REPO_DIR/scripts/powermenu"
 check_link "$HOME/.local/bin/setup-dev-tools" "$REPO_DIR/scripts/setup-dev-tools.sh"
 check_link "$HOME/.local/bin/smart-snip" "$REPO_DIR/scripts/smart-snip"

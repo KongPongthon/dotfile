@@ -300,6 +300,8 @@ sync_links() {
     link_file "$DOTFILES_DIR/.config/easyeffects" "$CONFIG_DIR/easyeffects" "EasyEffects"
     link_file "$DOTFILES_DIR/.config/fastfetch" "$CONFIG_DIR/fastfetch" "Fastfetch"
     link_file "$DOTFILES_DIR/.config/chrome-flags.conf" "$CONFIG_DIR/chrome-flags.conf" "Chrome flags"
+    link_file "$DOTFILES_DIR/.config/cursor-flags.conf" "$CONFIG_DIR/cursor-flags.conf" "Cursor flags"
+    link_file "$DOTFILES_DIR/.config/electron-flags.conf" "$CONFIG_DIR/electron-flags.conf" "Electron flags"
 
     if [ -d "$DOTFILES_DIR/.config/zed" ]; then
         link_file "$DOTFILES_DIR/.config/zed" "$CONFIG_DIR/zed" "Zed"
@@ -325,6 +327,7 @@ sync_links() {
     link_file "$DOTFILES_DIR/scripts/install-packages.sh" "$HOME/.local/bin/install-dotfiles-packages" "Package installer"
     link_file "$DOTFILES_DIR/scripts/network-menu" "$HOME/.local/bin/network-menu" "Network menu (Fuzzel)"
     link_file "$DOTFILES_DIR/scripts/ocr-snip" "$HOME/.local/bin/ocr-snip" "OCR screenshot helper"
+    link_file "$DOTFILES_DIR/scripts/session-secrets" "$HOME/.local/bin/session-secrets" "Session keyring helper"
     link_file "$DOTFILES_DIR/scripts/powermenu" "$HOME/.local/bin/powermenu" "Power menu (Fuzzel)"
     link_file "$DOTFILES_DIR/scripts/setup-dev-tools.sh" "$HOME/.local/bin/setup-dev-tools" "Developer tool setup"
     link_file "$DOTFILES_DIR/scripts/smart-snip" "$HOME/.local/bin/smart-snip" "Smart screenshot snip"
@@ -339,11 +342,22 @@ sync_links() {
     fi
 }
 
+setup_keyring() {
+    echo -e "\n${CYAN}Session secrets (login keyring)...${NC}"
+    if ! command -v gnome-keyring-daemon >/dev/null 2>&1; then
+        echo -e "${YELLOW}[Warn] gnome-keyring is not installed — Chrome/Cursor use --password-store=basic. Install the desktop set to also cover nm-applet / libsecret apps.${NC}"
+        return 0
+    fi
+    bash "$DOTFILES_DIR/scripts/session-secrets" || true
+    echo -e "${GREEN}[OK] Login keyring ready (no extra password after SDDM)${NC}"
+}
+
 run_extras() {
     setup_wallpapers
     setup_lock_bg
     setup_sddm
     setup_chrome
+    setup_keyring
     enable_services
     apply_live_session
 }

@@ -150,6 +150,8 @@ local taskManager = "btop"
 -- reloading Hyprland cannot create duplicate background services.
 local function ensure_desktop_services()
     hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE; systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE")
+    -- Unlock secrets for Chrome / Cursor / nm-applet using the login session (no extra password).
+    hl.exec_cmd(HOME .. "/.local/bin/session-secrets")
     hl.exec_cmd("hyprctl plugins list | grep -q 'Plugin GloView' || hyprctl plugin load /usr/lib/gloview.so")
     -- The wrapper takes an flock, so a second call is a no-op instead of a second bar.
     hl.exec_cmd(HOME .. "/.local/bin/waybar")

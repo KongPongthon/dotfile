@@ -7,8 +7,8 @@ Personal Hyprland setup for Arch/CachyOS on **MSI GF63 Thin 11UC** (Intel + NVID
 - Hyprland Lua (`hyprland.lua`) + hypridle / hyprlock (`hyprpolkitagent`)
 - kitty, waybar, fuzzel, swaync, wlogout, awww
 - zsh + Oh-My-Zsh + Starship + pokemon-colorscripts
-- google-chrome + cursor-bin (Chrome flags for Wayland; does **not** change default browser)
-- PipeWire, portals, bluetooth, gnome-keyring, Papirus icons
+- google-chrome + cursor-bin (Wayland flags; Chromium apps use the session, not a second keyring password)
+- PipeWire, portals, bluetooth, gnome-keyring (unlocked at login), Papirus icons
 - SDDM login theme tweaks (centered user/password + wallpaper)
 - Rumda dark/light theme switcher (`theme toggle`)
 
