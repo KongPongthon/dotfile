@@ -80,7 +80,7 @@
 | **`smart-snip`** | Smart Screenshot | คลิกซ้ายครอปลง Clipboard ทันที / คลิกขวาเปิด Swappy เพื่อวาด ปากกา เน้นข้อความ |
 | **`ocr-snip`** | Text Recognition (OCR) | ลากแคปข้อความภาษาไทยและอังกฤษ แปลงเป็นตัวอักษรลง Clipboard ทันทีผ่าน Tesseract |
 | **Cliphist + wl-clipboard** | Clipboard History Manager | เก็บประวัติข้อความและรูปภาพที่เคย Copy เรียกดูและวางซ้ำได้ง่าย |
-| **`theme-switcher`** | Instant Theme Switcher | สลับโทนสีระบบ Rumda Dark ⇄ Light ได้พร้อมกันทั้งเครื่องในทันที |
+| **`theme-switcher`** | Color theme picker | เลือกชุดสีทั้งระบบ (Rumda / Tide / Ember / Moss × Dark/Light) ผ่าน Fuzzel — ไม่มี daemon ค้าง |
 
 ---
 

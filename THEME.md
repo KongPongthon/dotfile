@@ -1,48 +1,42 @@
-# 🌧️ Theme Palette Reference: Rumda Dark x Rainy Keyboard
+# Theme palettes
 
-Extracted using **HSV Masking + K-Means** and mapped to Rumda's matte dark aesthetic.
+Color source of truth is `.config/themes/palettes/` (one `KEY=hex` file per palette). `theme-switcher` fills `.config/themes/templates/` and writes the active app files.
 
----
+## Palettes
 
-### 🎨 Color Tokens
+Same Rumda canvas (espresso / warm sand). Only the accent changes.
 
-| Token | Hex | Element Role |
+| Id | Name | Accent |
 | :--- | :--- | :--- |
-| `bg.canvas` | `#1C1612` | Main matte dark background (Hyprland, Kitty, Rofi window) |
-| `bg.surface` | `#28201A` | Card / Module surface (Waybar pills, Mako notification cards, Drawer input) |
-| `bg.hover` | `#382C24` | Active selection, hovered modules & buttons |
-| `border.subtle`| `#4A3C32` | Inactive dividers and subtle borders |
-| `accent.purple_light` | `#9890D0` | Active window border (high), cursor, active search match |
-| `accent.purple_base` | `#817BBE` | Active window border (base), active workspace pill, primary accent |
-| `accent.purple_dark` | `#66609E` | Secondary dark purple accent |
-| `accent.purple_deep` | `#423E63` | Inactive window border, legend ink |
-| `fg.white_top` | `#E9F3FB` | Primary text (Alphas keycap top face) |
-| `fg.white_shadow` | `#D0DBE6` | Secondary text (Alphas keycap shadow face) |
-| `fg.blue_gray` | `#9CADCF` | Icons, title, directory in prompt (Modifier keycap) |
-| `fg.blue_shadow` | `#6C769F` | Muted/dim text, inactive tabs |
-| `cyan.legend` | `#9AC2CB` | Clock, network, URLs, git status (Legend cyan text) |
-| `body.highlight` | `#E7F3FD` | Case shell highlight |
-| `body.base` | `#C5D3E0` | Case shell base |
+| `rumda-dark` / `rumda-light` | Rumda | Purple `#817BBE` / `#6E64A6` |
+| `tide-dark` / `tide-light` | Tide | Cyan `#6C9BA8` / `#2D7B8C` |
+| `ember-dark` / `ember-light` | Ember | Terracotta `#D89371` / `#C57434` |
+| `moss-dark` / `moss-light` | Moss | Sage `#5B8F64` / `#497E54` |
 
----
+## How to switch
+
+- `SUPER+SHIFT+T` — Fuzzel menu of all palettes
+- `SUPER+SHIFT+W` — Fuzzel menu of wallpapers (`Random` is the first row)
+- CLI: `theme pick`, `theme apply tide-dark`, `theme toggle` (dark ↔ light of the current family), `theme list`, `theme status`
+
+`~/.config/current_theme` stores the id (`rumda-dark`, …). Legacy values `dark` / `light` map to Rumda.
 
 ## How to edit colors and fonts
 
-`theme-switcher` **copies** theme files over the active ones. Edit the **source** files, then run `theme dark` or `theme light`. Do not treat the copied files as the source of truth.
+Edit a palette file, then `theme apply <id>` (or pick it from the menu). Do not treat generated files as the source.
 
-### Colors (edit dark and light together if you toggle)
+### Colors
 
-- Waybar: `.config/waybar/themes/style-dark.css` and `style-light.css` — the `@define-color` block at the top (`bg`, `fg`, `purple_base`, `cyan`, …)
-  - Do not edit `.config/waybar/style.css` as the source; `theme-switcher` overwrites it
-- Kitty colors: `.config/kitty/themes/rumda-dark.conf` / `rumda-light.conf`
-- Fuzzel: `.config/fuzzel/themes/`
-- Hyprland window borders: `general.col.active_border` in `.config/hypr/hyprland.lua`, **and** the `hyprctl keyword general:col.*` lines in `scripts/theme-switcher.sh` (otherwise a theme toggle resets borders to Rumda)
+- Palettes: `.config/themes/palettes/*.conf`
+- Templates: `.config/themes/templates/`
+- Generated (overwritten on apply): Waybar `colors.css`, Kitty `current-theme.conf`, Fuzzel `fuzzel.ini`, Mako `config`, GTK `gtk-current.css`, Starship `starship.toml`, Btop `themes/current.theme`, nwg-drawer `drawer.css`, Rofi `colors.rasi`, Hyprlock `hyprlock-colors.conf`, `~/.config/current_palette.json`
+
+Hyprland border colors in `hyprland.lua` are the boot default. `theme-switcher restore` runs on login / Hyprland reload so the saved palette wins.
 
 ### Fonts
 
-- Waybar: `font-family` / `font-size` in `style-dark.css` and `style-light.css` (currently `"Silkscreen"` with JetBrains / Meslo fallbacks)
-- Kitty: `font_family` / `font_size` in `.config/kitty/kitty.conf` (not in the rumda theme files)
-- Fuzzel: the `font=` line in the fuzzel theme files
+- Waybar: `font-family` / `font-size` in `.config/waybar/style.css` (layout only; colors stay in `colors.css`)
+- Kitty: `font_family` / `font_size` in `.config/kitty/kitty.conf`
+- Fuzzel: the `font=` line in `.config/themes/templates/fuzzel.ini.tmpl`
 
-After Waybar CSS changes: `pkill -SIGUSR2 -x waybar`, or run `theme dark` / `theme light` so the source files are copied into `style.css` again.
-
+After Waybar layout edits: `pkill -SIGUSR2 -x waybar`. After palette edits: `theme apply <id>`.

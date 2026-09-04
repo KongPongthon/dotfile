@@ -1,1 +1,11 @@
-themes/rumda-dark.rasi
+* {
+    bg-col:       #1C1612;
+    bg-col-light: #28201A;
+    border-col:   #817BBE;
+    selected-col: #382C24;
+    accent-blue:  #9CADCF;
+    accent-lav:   #9890D0;
+    fg-col:       #E9F3FB;
+    fg-col2:      #D0DBE6;
+    grey:         #6C769F;
+}

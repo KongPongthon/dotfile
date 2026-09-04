@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Set wallpaper via awww (or swww fallback). Usage: set-wallpaper.sh [random|path]
+# Set wallpaper via awww (or swww fallback). Usage: set-wallpaper.sh [pick|random|path]
 set -euo pipefail
 
 DIRS=(
@@ -105,14 +105,55 @@ ensure_daemon() {
   wait_ready
 }
 
+list_wallpapers() {
+  find "$WALL_DIR" -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) ! -path '*/Dynamic-Wallpapers/*'
+}
+
+pick_from_menu() {
+  if ! command -v fuzzel >/dev/null 2>&1; then
+    notify "fuzzel not found — cannot open wallpaper picker"
+    return 1
+  fi
+  mapfile -t files < <(list_wallpapers | sort)
+  ((${#files[@]} > 0)) || { notify "No wallpapers in $WALL_DIR"; return 1; }
+
+  local entries=("Random") rel f choice
+  for f in "${files[@]}"; do
+    rel="${f#"$WALL_DIR"/}"
+    entries+=("$rel")
+  done
+
+  local lines="${#entries[@]}"
+  ((lines > 14)) && lines=14
+  choice="$(printf '%s\n' "${entries[@]}" | fuzzel --dmenu --prompt="Wallpaper: " --lines="$lines" --width=56 || true)"
+  if [[ -z "$choice" ]]; then
+    return 2
+  fi
+  if [[ "$choice" == "Random" ]]; then
+    MODE=random
+  else
+    MODE="$WALL_DIR/$choice"
+  fi
+}
+
 WALL_DIR="$(pick_dir)" || {
   notify "No wallpaper directory found"
   exit 1
 }
 
 MODE="${1:-}"
+if [[ "$MODE" == "pick" ]]; then
+  pick_from_menu || {
+    st=$?
+    if [[ $st -eq 2 ]]; then
+      exit 0
+    fi
+    exit "$st"
+  }
+fi
+
 if [[ "$MODE" == "random" || -z "$MODE" ]]; then
-  mapfile -t files < <(find "$WALL_DIR" -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) ! -path '*/Dynamic-Wallpapers/*')
+  mapfile -t files < <(list_wallpapers)
   ((${#files[@]} > 0)) || { notify "No wallpapers in $WALL_DIR"; exit 1; }
   TARGET="${files[RANDOM % ${#files[@]}]}"
 else

@@ -19,7 +19,7 @@ set -g fish_color_autosuggestion 6272a4
 # Added by Antigravity CLI installer
 set -gx PATH "$HOME/.local/bin" $PATH
 
-# Theme Switcher (Rumda Dark ⇄ Light)
+# Theme Switcher (palette picker)
 function theme
     theme-switcher $argv
 end

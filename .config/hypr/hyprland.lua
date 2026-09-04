@@ -153,6 +153,7 @@ local function ensure_desktop_services()
     hl.exec_cmd("hyprctl plugins list | grep -q 'Plugin GloView' || hyprctl plugin load /usr/lib/gloview.so")
     -- The wrapper takes an flock, so a second call is a no-op instead of a second bar.
     hl.exec_cmd(HOME .. "/.local/bin/waybar")
+    hl.exec_cmd(HOME .. "/.local/bin/theme-switcher restore")
     hl.exec_cmd("pgrep -x swaync || swaync")
     hl.exec_cmd("pgrep -x hypridle || hypridle")
     -- Watches AC state and the battery level; its own flock makes this a no-op
@@ -496,7 +497,7 @@ hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl set 5%-"), { loc
 --##! Screenshots & wallpaper (original Print map)
 hl.bind("Print", hl.dsp.exec_cmd('grim -g "$(slurp)" - | wl-copy'), { description = "Utilities: Region screenshot >> clipboard" })
 hl.bind("SUPER + Print", hl.dsp.exec_cmd("grim - | wl-copy"), { description = "Utilities: Fullscreen screenshot >> clipboard" })
-hl.bind("SUPER + SHIFT + W", hl.dsp.exec_cmd(wallpaperScript .. " random"), { description = "Shell: Random wallpaper" })
+hl.bind("SUPER + SHIFT + W", hl.dsp.exec_cmd(wallpaperScript .. " pick"), { description = "Shell: Pick wallpaper" })
 
 -- Lid close: lock, then blank (not ignored)
 hl.bind("switch:on:Lid Switch", hl.dsp.exec_cmd(lockScript .. " --blank"), { locked = true })
@@ -507,7 +508,7 @@ hl.bind("SUPER + question", hl.dsp.exec_cmd("hotkey-cheatsheet"), { description 
 hl.bind("SUPER + SHIFT + S", hl.dsp.exec_cmd("pidof slurp || smart-snip"), { description = "Utilities: Smart snip (copy / swappy)" })
 hl.bind("SUPER + SHIFT + X", hl.dsp.exec_cmd("pidof slurp || ocr-snip"), { description = "Utilities: OCR Thai+English >> clipboard" })
 hl.bind("SUPER + F10", hl.dsp.exec_cmd("audio-switch"), { description = "Audio: Switch output device" })
-hl.bind("SUPER + SHIFT + T", hl.dsp.exec_cmd("theme-switcher toggle"), { description = "Shell: Toggle dark / light theme" })
+hl.bind("SUPER + SHIFT + T", hl.dsp.exec_cmd("theme-switcher pick"), { description = "Shell: Pick color theme" })
 hl.bind("SUPER + SHIFT + C", hl.dsp.exec_cmd("hyprpicker -a"), { description = "Utilities: Color picker" })
 hl.bind("CTRL + SUPER + B", hl.dsp.exec_cmd("battery-saver toggle"), { description = "Shell: Toggle battery saver" })
 hl.bind("CTRL + SUPER + R", hl.dsp.exec_cmd("hyprctl reload && pkill -x waybar"), { description = "Shell: Reload Hyprland & bar" })

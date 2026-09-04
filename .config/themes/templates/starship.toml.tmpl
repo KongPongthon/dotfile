@@ -4,15 +4,15 @@ format = "$directory$git_branch$git_status$character"
 
 [directory]
 truncation_length = 3
-style = "bold #9CADCF"
+style = "bold {{BLUE}}"
 
 [git_branch]
 symbol = " "
-style = "bold #9890D0"
+style = "bold {{ACCENT_LIGHT}}"
 
 [git_status]
-style = "bold #9AC2CB"
+style = "bold {{CYAN}}"
 
 [character]
-success_symbol = "[❯](#817BBE)"
-error_symbol = "[❯](#DB6657)"
+success_symbol = "[❯]({{ACCENT}})"
+error_symbol = "[❯]({{DANGER}})"
